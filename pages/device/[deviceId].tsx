@@ -1,0 +1,147 @@
+import React, {useEffect, useState} from "react";
+import Head from "next/head";
+import {useRouter} from "next/router";
+import Header from "../../components/header";
+import styles from "../../styles/Home.module.css";
+import InfoCardView from "../../layout/InfoCardView";
+import dynamic from "next/dynamic";
+import {onSnapshot,collection, query, where} from "firebase/firestore";
+import {auth, firestore, functions} from "../../components/Firebase";
+import {DeviceInfo} from "../../type/dataType";
+import Loading from "../../components/loading";
+import { httpsCallable } from "firebase/functions";
+import ErrorView from "../../layout/ErrorView";
+import {Browser} from "leaflet";
+import retina = Browser.retina;
+const DevicePage= () => {
+    const router = useRouter()
+    const {deviceId,token} = router.query
+    console.log("deviceId",deviceId)
+    console.log("token",token)
+    const [loading,setLoading] = useState(true)
+    const [checkLoading,setCheckLoading] = useState(false)
+    const [errorMessage,setErrorMessage] = useState("")
+    const [device,setDevice] = useState<DeviceInfo|undefined>(undefined)
+    useEffect(() => {
+        // Update the document title using the browser API
+        if(router.isReady && deviceId) {
+            console.log("fast token", token)
+            console.log("fast token", deviceId)
+            if(token) {
+                setCheckLoading(true)
+
+                const requestSilo = httpsCallable(functions, 'requestAccessPermissionSilo');
+                requestSilo({docId: deviceId, token})
+                    .then(value => console.log(value))
+                    .catch(e => {
+                        if(e.code == "functions/permission-denied" || e.code == "functions/invalid-argument") {
+                            setErrorMessage("読み取ったQRコードは正しくありません。")
+                        }else if(e.code == "failed-precondition"){
+                            setErrorMessage("再度開きなおすか、ブラウザをリセットしてください。")
+                        }else{
+                            setErrorMessage("予期しないエラーが発生しました。オンラインになっているか確認したのち再度開きなおすか、ブラウザをリセットしてください。")
+                        }
+                    }).finally(() => setCheckLoading(false))
+            }
+            const unsub = onSnapshot(
+                query(
+                    collection(firestore, "devices"),
+                    where('onceUser', 'array-contains', auth.currentUser?.uid),
+                    where("name", "==", deviceId)
+                ), (query) => {
+                    if(query.empty){
+                        console.log("empty")
+                    }else {
+                        query.forEach(doc => {
+                                const data = doc.data()
+                                console.log("Current data: ", data, doc.id)
+                                setDevice({
+                                    weight: Number(data.weight),
+                                    deviceName: data.name,
+                                    lastDate: doc.data({serverTimestamps: "estimate"}).lastDate.toDate(),
+                                    dbId: doc.id,
+                                    location: data.location
+                                })
+                            }
+                        )
+                    }
+                    setLoading(false)
+                })
+            return () => {
+                unsub()
+            }
+        }
+    },[deviceId]);
+    const Map = React.useMemo(
+        () =>
+            dynamic(() => import("../../components/map"), {
+                loading: () => <p>A map is loading</p>,
+                ssr: false,
+            }),
+        []
+    );
+
+    if(device) {
+        return (
+            <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                </Head>
+                <Header/>
+
+                <main className={styles.main}>
+                    <InfoCardView title={device.deviceName} value={`${device.weight.toLocaleString()} kg`} alert={device.weight < 4000}/>
+                    <Map latitude={device.location.latitude} longitude={device.location.longitude} markerMessage={device.deviceName}/>
+                </main>
+            </>
+        );
+    }else{
+        if(errorMessage){
+           return( <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                    <meta name="description" content="昭和鋼機のサイロの重量を確認できます"/>
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <link rel="icon" href="/favicon.ico"/>
+                </Head>
+                <Header/>
+                <ErrorView errorMessage={errorMessage}/>
+            </>)
+        }
+        if (loading || checkLoading) {
+            console.log("loading...")
+            return <Loading/>;
+        }
+        return (
+            <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                    <meta name="description" content="昭和鋼機のサイロの重量を確認できます"/>
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <link rel="icon" href="/favicon.ico"/>
+                </Head>
+                <Header/>
+
+                <main className={styles.main}>
+                    <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
+                </main>
+            </>
+        )
+    }
+
+}
+
+export async function getStaticPaths() {
+    const deviceList = ["SR-12","SR-13"]
+    return {
+        paths: deviceList.map(value => {return { params: { deviceId: value } }}),
+        fallback: true,
+    }
+}
+
+export async function getStaticProps() {
+    return { props: {}}
+}
+
+
+export default DevicePage;

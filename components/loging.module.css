@@ -1,0 +1,23 @@
+.loading{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    text-align: center;
+    font-size: 1.2em;
+    color: #FFF;
+    background: rgba(0,0,0,0.7);
+    z-index: 800;
+    -webkit-transition: opacity 500ms ease-in;
+    transition: opacity 500ms ease-in;
+    opacity: 1;
+}
+
+.center{
+    margin: auto;
+}

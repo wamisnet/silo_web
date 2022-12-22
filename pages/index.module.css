@@ -1,0 +1,8 @@
+.bottom_button{
+    position: fixed;
+    bottom: 0;
+    padding: 1rem;
+    width: 100%!important;
+    display: flex;
+    justify-content: flex-end;
+}
