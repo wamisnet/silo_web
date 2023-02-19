@@ -13,6 +13,8 @@ import { httpsCallable } from "firebase/functions";
 import ErrorView from "../../layout/ErrorView";
 import {Browser} from "leaflet";
 import retina = Browser.retina;
+import indexStyle from "../index.module.css";
+import Link from "next/link";
 const DevicePage= () => {
     const router = useRouter()
     const {deviceId,token} = router.query
@@ -93,6 +95,13 @@ const DevicePage= () => {
                     <InfoCardView title={device.deviceName} value={`${device.weight.toLocaleString()} kg`} alert={device.weight < 4000}/>
                     <Map latitude={device.location.latitude} longitude={device.location.longitude} markerMessage={device.deviceName}/>
                 </main>
+                <div className={indexStyle.bottom_button}>
+                    <Link href={"/"}>
+                        <button type="button" className={"btn btn-primary rounded-pill"}>
+                            トップページへ
+                        </button>
+                    </Link>
+                </div>
             </>
         );
     }else{
@@ -106,6 +115,13 @@ const DevicePage= () => {
                 </Head>
                 <Header/>
                 <ErrorView errorMessage={errorMessage}/>
+               <div className={indexStyle.bottom_button}>
+                   <Link href={"/"}>
+                       <button type="button" className={"btn btn-primary rounded-pill"}>
+                           トップページへ
+                       </button>
+                   </Link>
+               </div>
             </>)
         }
         if (loading || checkLoading) {
@@ -125,6 +141,13 @@ const DevicePage= () => {
                 <main className={styles.main}>
                     <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
                 </main>
+                <div className={indexStyle.bottom_button}>
+                    <Link href={"/"}>
+                        <button type="button" className={"btn btn-primary rounded-pill"}>
+                            トップページへ
+                        </button>
+                    </Link>
+                </div>
             </>
         )
     }
