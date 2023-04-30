@@ -14,17 +14,3 @@ export interface DeviceToken {
   devices:string[]
   token:string
 }
-
-export interface UpdateDeviceInfo {
-  weight:number
-  location:GeoPoint
-}
-
-export interface RequestApiUpdateDeviceInfo {
-  weight:number
-  location:{
-    latitude: number
-    longitude: number
-  }
-  id:string
-}

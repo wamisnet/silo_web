@@ -13,6 +13,7 @@ import {auth, firestore, functions} from "../components/Firebase";
 import Loading from "../components/loading";
 import {httpsCallable} from "firebase/functions";
 import ErrorView from "../layout/ErrorView";
+import {toDeviceInfo} from "../type/convert";
 
 export default function Home() {
     const [isDeleteMode,setDeleteMode] = useState(false)
@@ -21,8 +22,8 @@ export default function Home() {
     const [errorMessage,setErrorMessage] = useState("")
     const [deleteDevice, setDeleteDevice] = useState<DeviceInfo | undefined>(undefined)
     const deviceQuery = useFirestoreQuery(
-        ["devices"],
-        query(collection(firestore, "devices"),where('onceUser', 'array-contains',  auth.currentUser?.uid)),
+        ["v2devices"],
+        query(collection(firestore, "v2devices"),where('onceUser', 'array-contains',  auth.currentUser?.uid)),
         {subscribe:true});
     if(deviceQuery.error){
         return( <>
@@ -56,15 +57,9 @@ export default function Home() {
     if(deviceQuery.data && deviceQuery.data.docs.length != 0) {
         console.log(deviceQuery.data)
         console.log(deviceQuery.data.docs.length)
-        const dbData:DeviceInfo[] = deviceQuery.data.docs.map<DeviceInfo>((value) => {
-            const data = value.data()
-            return {
-                weight:Number(data.weight),
-                deviceName:data.name,
-                lastDate:value.data({ serverTimestamps: "estimate" }).lastDate.toDate(),
-                dbId:value.id,
-                location:data.location
-            }
+        const dbData:DeviceInfo[] = deviceQuery.data.docs.map<DeviceInfo>((value):DeviceInfo => {
+            // const data = value.data()
+            return toDeviceInfo(value)
         })
         return (
             <>
@@ -79,7 +74,7 @@ export default function Home() {
                     <CModalHeader>
                         <CModalTitle>次のサイロを表示しないように削除しますか？</CModalTitle>
                     </CModalHeader>
-                    <CModalBody>対象:{deleteDevice?.deviceName} <br/>この作業は元に戻せません。再度表示したい場合はQRの読み取りから行ってください。</CModalBody>
+                    <CModalBody>対象:{deleteDevice?.siloId} <br/>この作業は元に戻せません。再度表示したい場合はQRの読み取りから行ってください。</CModalBody>
                     <CModalFooter>
                         <CButton color="secondary" onClick={() => setVisible(false)}>
                             キャンセル
@@ -89,7 +84,7 @@ export default function Home() {
                                 setVisible(false)
                                 setCheckLoading(true)
                                 const requestSilo = httpsCallable(functions, 'deleteAccessPermissionSilo');
-                                await requestSilo({docId: deleteDevice?.dbId})
+                                await requestSilo({docId: deleteDevice?.siloId})
                                 console.log("delete")
                             }catch (e:any) {
                                 if(e.code == "functions/permission-denied" || e.code == "functions/invalid-argument") {
@@ -108,16 +103,19 @@ export default function Home() {
                 <main className={styles.main}>
                     {dbData.map(value=> {
                         console.log("db",value)
-                            return (<Link href={isDeleteMode?"#":"/device/" + value.deviceName} className="link-clear" key={value.dbId}>
-                                <InfoCardView title={value.deviceName} value={`${value.weight.toLocaleString()} kg`} alert={value.weight < 4000}
-                                           isButton={isDeleteMode}
-                                              buttonTitle="削除"
-                                           onClickButton={(deviceName: string,event) => {
-                                               event.stopPropagation()
-                                               setDeleteDevice(value);
-                                               setVisible(true);
-                                               console.log("delete dialog", deviceName)
-                                           }}/>
+                            return (<Link href={isDeleteMode?"#":"/device/" + value.siloId} className="link-clear" key={value.siloId}>
+                                <InfoCardView
+                                    title={value.siloId}
+                                    value={value.scale && value.scale.active?`${value.scale.weight.toLocaleString()} kg`:"重量データがありません"}
+                                    alert={value.scale && value.scale.active && value.scale.weight < 4000}
+                                    isButton={isDeleteMode}
+                                      buttonTitle="削除"
+                                    onClickButton={(deviceName: string,event) => {
+                                       event.stopPropagation()
+                                       setDeleteDevice(value);
+                                       setVisible(true);
+                                       console.log("delete dialog", deviceName)
+                                   }}/>
                             </Link>)
                         }
                     )}

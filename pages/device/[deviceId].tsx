@@ -15,6 +15,7 @@ import {Browser} from "leaflet";
 import retina = Browser.retina;
 import indexStyle from "../index.module.css";
 import Link from "next/link";
+import {toDeviceInfo} from "../../type/convert";
 const DevicePage= () => {
     const router = useRouter()
     const {deviceId,token} = router.query
@@ -47,9 +48,9 @@ const DevicePage= () => {
             }
             const unsub = onSnapshot(
                 query(
-                    collection(firestore, "devices"),
+                    collection(firestore, "v2devices"),
                     where('onceUser', 'array-contains', auth.currentUser?.uid),
-                    where("name", "==", deviceId)
+                    where("siloId", "==", deviceId)
                 ), (query) => {
                     if(query.empty){
                         console.log("empty")
@@ -57,13 +58,7 @@ const DevicePage= () => {
                         query.forEach(doc => {
                                 const data = doc.data()
                                 console.log("Current data: ", data, doc.id)
-                                setDevice({
-                                    weight: Number(data.weight),
-                                    deviceName: data.name,
-                                    lastDate: doc.data({serverTimestamps: "estimate"}).lastDate.toDate(),
-                                    dbId: doc.id,
-                                    location: data.location
-                                })
+                                setDevice(toDeviceInfo(doc))
                             }
                         )
                     }
@@ -92,8 +87,14 @@ const DevicePage= () => {
                 <Header/>
 
                 <main className={styles.main}>
-                    <InfoCardView title={device.deviceName} value={`${device.weight.toLocaleString()} kg`} alert={device.weight < 4000}/>
-                    <Map latitude={device.location.latitude} longitude={device.location.longitude} markerMessage={device.deviceName}/>
+                    <InfoCardView
+                        title={device.siloId}
+                        value={device.scale && device.scale.active?`${device.scale.weight.toLocaleString()} kg`:"重量データがありません"}
+                        alert={device.scale && device.scale.active && device.scale.weight < 4000}/>
+                    {device.gps?
+                        <Map latitude={device.gps.latitude} longitude={device.gps.longitude} markerMessage={device.siloId}/>:<p>位置情報がありません</p>
+                    }
+
                 </main>
                 <div className={indexStyle.bottom_button}>
                     <Link href={"/"}>
@@ -155,7 +156,7 @@ const DevicePage= () => {
 }
 
 export async function getStaticPaths() {
-    const deviceList = ["SR-12","SR-13"]
+    const deviceList = ["ST-01"]
     return {
         paths: deviceList.map(value => {return { params: { deviceId: value } }}),
         fallback: true,

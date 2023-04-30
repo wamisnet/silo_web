@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "cross-env NEXT_PUBLIC_APP_BUILD_VERSION=localBuild next dev",
+    "build": "node ./build.js",
     "start": "next start",
     "lint": "next lint",
-    "build_export": "next build && next export -o ./out",
+    "build_export": "npm run build && next export -o ./out",
     "hosting": "firebase deploy --only hosting",
-    "build_hosting": "npm run build_export && firebase deploy --only hosting"
+    "build_hosting": "npm run build_export && firebase deploy --only hosting:silo-iot-scale"
   },
   "dependencies": {
     "@coreui/coreui": "^4.2.1",
@@ -33,6 +33,8 @@
     "typescript": "4.9.4"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.0"
+    "@types/leaflet": "^1.9.0",
+    "cross-env": "^7.0.3",
+    "build-number-generator": "2.0.4"
   }
 }
