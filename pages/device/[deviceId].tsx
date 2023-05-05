@@ -11,8 +11,6 @@ import {DeviceInfo} from "../../type/dataType";
 import Loading from "../../components/loading";
 import { httpsCallable } from "firebase/functions";
 import ErrorView from "../../layout/ErrorView";
-import {Browser} from "leaflet";
-import retina = Browser.retina;
 import indexStyle from "../index.module.css";
 import Link from "next/link";
 import {toDeviceInfo} from "../../type/convert";
