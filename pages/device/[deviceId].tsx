@@ -7,14 +7,19 @@ import InfoCardView from "../../layout/InfoCardView";
 import dynamic from "next/dynamic";
 import {onSnapshot,collection, query, where} from "firebase/firestore";
 import {auth, firestore, functions} from "../../components/Firebase";
-import {DeviceInfo} from "../../type/dataType";
+import {DeviceInfo, JSONDevice, JSONSiloConfig} from "../../type/dataType";
 import Loading from "../../components/loading";
 import { httpsCallable } from "firebase/functions";
 import ErrorView from "../../layout/ErrorView";
 import indexStyle from "../index.module.css";
 import Link from "next/link";
 import {toDeviceInfo} from "../../type/convert";
-const DevicePage= () => {
+import {GetStaticPaths, NextPage} from "next";
+import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
+import path from "node:path";
+import fsPromises from "fs/promises";
+
+const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
     const router = useRouter()
     const {deviceId,token} = router.query
     console.log("deviceId",deviceId)
@@ -87,10 +92,19 @@ const DevicePage= () => {
                 <main className={styles.main}>
                     <InfoCardView
                         title={device.siloId}
-                        value={device.scale && device.scale.active?`${device.scale.weight.toLocaleString()} kg`:"重量データがありません"}
+                        value={device.scale && device.scale.active?`${Math.round(device.scale.weight).toLocaleString()} kg`:"重量データがありません"}
                         alert={device.scale && device.scale.active && device.scale.weight < 4000}/>
                     {device.gps?
-                        <Map latitude={device.gps.latitude} longitude={device.gps.longitude} markerMessage={device.siloId}/>:<p>位置情報がありません</p>
+                        <Map
+                            url="device"
+                            latitude={device.gps.latitude}
+                            longitude={device.gps.longitude}
+                            list={[{
+                                latitude:device.gps.latitude,
+                                longitude:device.gps.longitude,
+                                markerMessage:device.siloId,
+                                error:false}]}
+                        />:<p>位置情報がありません</p>
                     }
 
                 </main>
@@ -153,16 +167,32 @@ const DevicePage= () => {
 
 }
 
-export async function getStaticPaths() {
-    const deviceList = ["ST-01"]
+export const getStaticPaths: GetStaticPaths<Params> = async () => {
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+    const deviceList = devicesJson.devices.map((value: JSONDevice)=>value.id) as string[]
     return {
         paths: deviceList.map(value => {return { params: { deviceId: value } }}),
-        fallback: true,
+        fallback: false,
     }
 }
 
-export async function getStaticProps() {
-    return { props: {}}
+export const getStaticProps: ({params}: { params: { deviceId:string } }) => Promise<{ props: JSONSiloConfig }|void> = async ({ params }) => {
+    const deviceId = params?params.deviceId:"" as string
+
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+    const device = devicesJson.devices.find((value: JSONDevice)=>value.id === deviceId) as undefined | JSONDevice
+    if(device){
+        const data = devicesJson[device.type] as JSONSiloConfig
+        console.log(JSON.stringify(data))
+        return { props: data}
+    }
+    return
 }
 
 

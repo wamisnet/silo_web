@@ -1,0 +1,188 @@
+{
+    "devices": [
+        {
+            "id": "ST-01",
+            "type": "stvn"
+        },{
+            "id": "STVN-3787U",
+            "type": "stvn"
+        },{
+            "id": "STVN-0008",
+            "type": "stvn"
+        },{
+            "id": "STVN-3734U",
+            "type": "stvn"
+        },{
+            "id": "STVN-0009",
+            "type": "stvn"
+        },{
+            "id": "STVN-3786U",
+            "type": "stvn"
+        },{
+            "id": "STVN-0011",
+            "type": "stvn"
+        }
+    ],
+    "stvn": {
+        "name": "昭和鋼機スマートサイロ",
+        "description": "昭和鋼機の説明",
+        "levelType": "weight",
+        "weight": {
+            "max": 30000,
+            "min": 3000
+        },
+        "baseImage": "/image/silo/type/base.png",
+        "levelImage": {
+            "viewType": "image",
+            "imageMask": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+            ]
+        },
+        "levelColor": [
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff"
+        ],
+        "judgment": [
+            {
+                "mask": "/image/silo/type/j_IN1.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+                "title": "竪SCサーマル",
+                "description": "竪SCサーマル",
+                "active": true,
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN2.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+
+                "title": "引出SCサーマル",
+                "description": "引出SCサーマル",
+                "active": true,
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN3.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "点灯"
+                },
+                "title": "満量",
+                "description": "満量センサー",
+                "active": true,
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN4.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#00ff00",
+                    "text": "点灯"
+                },
+                "title": "1車受け入れ可",
+                "description": "1車受け入れ可",
+                "active": true,
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN5.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "停止"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "作動"
+                },
+                "title": "満量ブザー",
+                "description": "満量ブザー",
+                "active": true,
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "title": "",
+                "description": "",
+                "active": false,
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "title": "",
+                "description": "",
+                "active": false,
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": ""
+                },
+                "title": "",
+                "description": "",
+                "active": false,
+                "error": ""
+            }
+        ]
+    }
+}

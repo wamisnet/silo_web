@@ -3,9 +3,9 @@ import styles from '../styles/Home.module.css'
 import Header from "../components/header";
 import InfoCardView from "../layout/InfoCardView";
 import indexStyle from "./index.module.css"
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react";
-import {collection, where, query} from "firebase/firestore";
+import {collection, where, query,startAfter,limit,orderBy} from "firebase/firestore";
 import Link from "next/link";
 import {useFirestoreQuery} from "@react-query-firebase/firestore";
 import {DeviceInfo} from "../type/dataType";
@@ -14,6 +14,7 @@ import Loading from "../components/loading";
 import {httpsCallable} from "firebase/functions";
 import ErrorView from "../layout/ErrorView";
 import {toDeviceInfo} from "../type/convert";
+import {useRouter} from "next/router";
 
 export default function Home() {
     const [isDeleteMode,setDeleteMode] = useState(false)
@@ -21,9 +22,12 @@ export default function Home() {
     const [checkLoading,setCheckLoading] = useState(false)
     const [errorMessage,setErrorMessage] = useState("")
     const [deleteDevice, setDeleteDevice] = useState<DeviceInfo | undefined>(undefined)
+    const router = useRouter()
+    const {page_key} = router.query
+    console.log("page_key index ",page_key?page_key:"")
     const deviceQuery = useFirestoreQuery(
-        ["v2devices"],
-        query(collection(firestore, "v2devices"),where('onceUser', 'array-contains',  auth.currentUser?.uid)),
+        ["v2devices_"+page_key],
+        query(collection(firestore, "v2devices"),where('onceUser', 'array-contains',  auth.currentUser?.uid),orderBy("siloId"),startAfter(page_key?page_key:""),limit(25)),
         {subscribe:true});
     if(deviceQuery.error){
         return( <>
@@ -103,10 +107,10 @@ export default function Home() {
                 <main className={styles.main}>
                     {dbData.map(value=> {
                         console.log("db",value)
-                            return (<Link href={isDeleteMode?"#":"/device/" + value.siloId} className="link-clear" key={value.siloId}>
+                            return (<Link href={isDeleteMode?"#":"/status/" + value.siloId} className="link-clear" key={value.siloId}>
                                 <InfoCardView
                                     title={value.siloId}
-                                    value={value.scale && value.scale.active?`${Math.round(value.scale.weight).toLocaleString()} kg`:"重量データがありません"}
+                                    value={value.scale && value.scale.active?`${value.scale.weight.toLocaleString()} kg`:"重量データがありません"}
                                     alert={value.scale && value.scale.active && value.scale.weight < 4000}
                                     isButton={isDeleteMode}
                                       buttonTitle="削除"
@@ -121,6 +125,9 @@ export default function Home() {
                     )}
                 </main>
                 <div className={indexStyle.bottom_button}>
+                    <button type="button" className={"btn btn-primary rounded-pill "} onClick={()=>location.href='/clone'}>
+                        更新
+                    </button>　
                     <button type="button" className={"btn btn-primary rounded-pill"} onClick={()=>setDeleteMode(!isDeleteMode)}>
                         {isDeleteMode?"キャンセル":"削除"}
                     </button>

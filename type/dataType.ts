@@ -2,17 +2,14 @@ export type DeviceInfo = {
     siloId: string;//Silo管理番号
     serialNumber?: string;//Silo管理番号
     judgment?:{
-        thermalVertical:boolean,//縦スクリューサーマル
-        thermalDrawer:boolean,//横スクリューサーマル
-        levelMax:boolean,//満量ランプ
-        levelMin:boolean,//下限ランプ
-        buzzerMax:boolean//満量ブザー
+        status:[boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean]
         updatedAt:Date//最終更新日時
     }
     gps?: {
         latitude: number;//緯度
         longitude: number;//経度
-        active:boolean//動作状態
+        active:boolean//GPS位置特定完了
+        connect:boolean//GPS接続状態
         updatedAt:Date//最終更新日時
     };
     power?:{
@@ -45,10 +42,70 @@ export type DeviceInfo = {
     updatedAt?:Date//最終更新日時
     memo?:string
     onceUser?:string[] // 重量計アプリで使用 prevと差分があれば削除する
+    user?:string[] // 権限所持してるユーザを確認できる
+    currentPositionStartTime?:Date//住所変更があったあと初回起動日時
+    adc?:{
+        level:number// ADC Level 0-100
+        active:boolean//動作状態
+        error:{
+            low:boolean
+            high:boolean
+        }
+        updatedAt:Date//最終更新日時
+    }
 }
 
 export type DeviceToken = {
     active:boolean // Tokenを有効無効管理
     devices: string[] // SiloIDの配列
     token: string //　URLに同梱するToken
+}
+
+export type DeviceAction = {
+    type:"IN1"|"IN2"|"IN3"|"IN4"|"IN5"|"IN6"|"IN7"|"IN8"|"power"　// Type
+    value:boolean|number // ステータス　power以外はBoolean
+}
+
+export type DeviceHistory = {
+    types:string[]//actionsにあるtypeを重複しない形で保存
+    actions:DeviceAction[]
+    expires:Date//削除日時
+    createAt:Date//作成日時
+}
+
+export type JSONDevice = {
+    id:string
+    type:string
+}
+
+export type JSONSiloConfig = {
+    name:string
+    description:string
+    levelType:"weight"|"level"
+    weight?:{
+        max:number
+        min:number
+    }
+    baseImage:string
+    levelImage?:{
+        viewType:"image"|"progress"
+        imageMask?:string[]
+        progressMask?:string
+    }
+    levelColor:string[]
+    judgment:{
+        mask:string
+        open:{
+            color:string
+            text:string
+        }
+        close:{
+            color:string
+            text:string
+        }
+        title:string
+        description:string
+        active:boolean
+        error:"open"|"close"|""
+    }[]
 }

@@ -1,4 +1,4 @@
-import {DeviceInfo, DeviceToken} from "./dataType";
+import {DeviceHistory, DeviceInfo, DeviceToken} from "./dataType";
 import firestore from "firebase/firestore";
 import DocumentData = firestore.DocumentData;
 import DocumentSnapshot = firestore.DocumentSnapshot;
@@ -36,6 +36,15 @@ export function toObjectSnapshot<T>(doc: DocumentSnapshot): T {
   return obj as T;
 }
 
+export function toDeviceHistory(doc: QueryDocumentSnapshot<DocumentData>): DeviceHistory {
+  const info = {
+    ...toObject<DeviceHistory>(doc),
+  };
+  info.createAt = (info.createAt as any as Timestamp).toDate()
+  info.expires = (info.expires as any as Timestamp).toDate()
+  return info
+}
+
 export function toDeviceInfo(doc: QueryDocumentSnapshot<DocumentData>): DeviceInfo {
   const info = {
     ...toObject<DeviceInfo>(doc),
@@ -55,6 +64,9 @@ export function toDeviceInfo(doc: QueryDocumentSnapshot<DocumentData>): DeviceIn
   if(info.scale){
     info.scale.updatedAt =  (info.scale.updatedAt as any as Timestamp).toDate();
   }
+  if(info.adc){
+    info.adc.updatedAt =  (info.adc.updatedAt as any as Timestamp).toDate();
+  }
   if(info.oldGps){
     if(info.oldGps.address){
       info.oldGps.address.updatedAt =  (info.oldGps.address.updatedAt as any as Timestamp).toDate();
@@ -62,6 +74,9 @@ export function toDeviceInfo(doc: QueryDocumentSnapshot<DocumentData>): DeviceIn
     if(info.oldGps.previous){
       info.oldGps.previous.updatedAt =  (info.oldGps.previous.updatedAt as any as Timestamp).toDate();
     }
+  }
+  if(info.currentPositionStartTime){
+    info.currentPositionStartTime = (info.currentPositionStartTime as any as Timestamp).toDate();
   }
   return info;
 }

@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "build_export": "npm run build && next export -o ./out",
-    "hosting": "firebase deploy --only hosting",
     "build_hosting": "npm run build_export && firebase deploy --only hosting:silo-iot-scale"
   },
   "dependencies": {
@@ -25,12 +24,15 @@
     "leaflet": "^1.9.3",
     "next": "13.0.7",
     "react": "18.2.0",
+    "react-device-detect": "^2.2.3",
     "react-dom": "18.2.0",
     "react-firebase-hooks": "^5.1.1",
     "react-leaflet": "^4.2.0",
     "react-loading": "^2.0.3",
+    "react-qr-code": "^2.0.11",
     "react-query": "^3.39.2",
-    "typescript": "4.9.4"
+    "typescript": "4.9.4",
+    "use-interval": "^1.4.0"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.0",

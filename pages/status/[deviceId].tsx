@@ -1,0 +1,398 @@
+import React, {useEffect, useState} from "react";
+import Head from "next/head";
+import {useRouter} from "next/router";
+import Header from "../../components/header";
+import styles from "../../styles/Home.module.css";
+import InfoCardView from "../../layout/InfoCardView";
+import dynamic from "next/dynamic";
+import {onSnapshot,collection, query, where} from "firebase/firestore";
+import {auth, firestore, functions} from "../../components/Firebase";
+import {DeviceInfo, JSONDevice, JSONSiloConfig} from "../../type/dataType";
+import Loading from "../../components/loading";
+import { httpsCallable } from "firebase/functions";
+import ErrorView from "../../layout/ErrorView";
+import indexStyle from "../index.module.css";
+import Link from "next/link";
+import {toDeviceInfo} from "../../type/convert";
+import {CButton, CCard, CCardBody, CCardHeader, CCardText, CCol, CListGroup, CListGroupItem, CRow} from "@coreui/react";
+import style from "../../layout/InfoCardView.module.css";
+import HistoryList from "../../components/historyList";
+import { BrowserView, MobileView, isBrowser, isMobile } from 'react-device-detect';
+import SiloImage from "../../components/siloImage";
+import useInterval from "use-interval";
+import {GetStaticPaths, NextPage} from "next";
+import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
+import path from "node:path";
+import fsPromises from "fs/promises";
+const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
+    const router = useRouter()
+    const {deviceId,token} = router.query
+    console.log("deviceId",deviceId)
+    console.log("token",token)
+    const [loading,setLoading] = useState(true)
+    const [checkLoading,setCheckLoading] = useState(false)
+    const [errorMessage,setErrorMessage] = useState("")
+    const [device,setDevice] = useState<DeviceInfo|undefined>(undefined)
+    const [state, setState] = useState<number>(0);
+    useInterval(() => {
+        setState(state + 1);
+    }, 5000);
+    useEffect(() => {
+        // Update the document title using the browser API
+        if(router.isReady && deviceId) {
+            console.log("fast token", token)
+            console.log("fast token", deviceId)
+            if(token) {
+                setCheckLoading(true)
+
+                const requestSilo = httpsCallable(functions, 'requestAccessPermissionSilo');
+                requestSilo({docId: deviceId, token})
+                    .then(value => console.log(value))
+                    .catch(e => {
+                        if(e.code == "functions/permission-denied" || e.code == "functions/invalid-argument") {
+                            setErrorMessage("読み取ったQRコードは正しくありません。")
+                        }else if(e.code == "failed-precondition"){
+                            setErrorMessage("再度開きなおすか、ブラウザをリセットしてください。")
+                        }else{
+                            setErrorMessage("予期しないエラーが発生しました。オンラインになっているか確認したのち再度開きなおすか、ブラウザをリセットしてください。")
+                        }
+                    }).finally(() => setCheckLoading(false))
+            }
+            const unsub = onSnapshot(
+                query(
+                    collection(firestore, "v2devices"),
+                    where('onceUser', 'array-contains', auth.currentUser?.uid),
+                    where("siloId", "==", deviceId)
+                ), (query) => {
+                    if(query.empty){
+                        console.log("empty")
+                    }else {
+                        query.forEach(doc => {
+                                const data = doc.data()
+                                console.log("Current data: ", data, doc.id)
+                                setDevice(toDeviceInfo(doc))
+                            }
+                        )
+                    }
+                    setLoading(false)
+                })
+            return () => {
+                unsub()
+            }
+        }
+    },[deviceId]);
+    const Map = React.useMemo(
+        () =>
+            dynamic(() => import("../../components/map"), {
+                loading: () => <p>A map is loading</p>,
+                ssr: false,
+            }),
+        []
+    );
+
+    if(device && props) {
+        return (
+            <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                </Head>
+                <Header/>
+
+                <main className={styles.main}>
+                    <MobileView>
+                        <h1>This is rendered only on mobile</h1>
+                    </MobileView>
+                    {/*<InfoCardView*/}
+                    {/*    title={device.siloId}*/}
+                    {/*    value={device.scale && device.scale.active?`${device.scale.weight.toLocaleString()} kg`:"重量データがありません"}*/}
+                    {/*    alert={device.scale && device.scale.active && device.scale.weight < 4000}/>*/}
+                    {/*{device.gps?*/}
+                    {/*    <Map latitude={device.gps.latitude} longitude={device.gps.longitude} markerMessage={device.siloId}/>:<p>位置情報がありません</p>*/}
+                    {/*}*/}
+                    <BrowserView>
+                    <CRow className="g-3">
+                        <CCol md={4}>
+                            <CCard className="mb-3 ">
+                                <CCardHeader className={style.status_title}>
+                                    デバイス情報　始動日: {device.currentPositionStartTime?device.currentPositionStartTime.toLocaleString():"未開始"}
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.updatedAt ?
+                                        <CCardText>
+                                            <ul className={"m-3"}>
+                                                <li>サイロID: {device.siloId}</li>
+                                                <li>サイロ管理番号: {device.serialNumber?device.serialNumber:"未設定"}</li>
+                                                <li>最終更新日: {device.updatedAt.toLocaleString()}</li>
+                                            </ul>
+                                        </CCardText>:
+                                        <CCardText>最終更新日がありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={4}>
+                            <CCard className="mb-3 ">
+                                <CCardHeader className={style.status_title}>
+                                    重量計　更新日:{device.scale ?device.scale.updatedAt.toLocaleString():"未取得"}
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.scale ?
+                                        <CCardText className={device.scale.weight < 4000||!device.scale.active? style.status_text_red : style.status_text}>
+                                            {device.scale.active?
+                                                <ul className={"m-3"}>
+                                                    <li className={style.weight_text}>重量:{device.scale.weight}kg</li>
+                                                    <li>最終更新日:{device.scale.updatedAt.toLocaleString()}</li>
+                                                </ul>:
+                                                `重量計と通信できません (${device.scale.updatedAt.toLocaleString()})`
+                                            }
+                                        </CCardText>:
+                                        <CCardText>重量データがありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={4}>
+                            <CCard className="mb-3 ">
+                                <CCardHeader className={style.status_title}>
+                                    電圧計測
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.power ?
+                                        <CCardText className={device.power.voltage < 200 || device.power.error.high || device.power.error.low? style.status_text_red : style.status_text}>
+                                            {device.power.error.low ?
+                                                "未接続か計測下限です":
+                                                device.power.error.high?
+                                                    "計測上限です":
+                                                    <ul className={"m-3"}>
+                                                        <li>電圧:{device.power.voltage}V</li>
+                                                        <li>周波数:{device.power.frequency}Hz</li>
+                                                        <li>最終更新日:{device.power.updatedAt.toLocaleString()}</li>
+                                                    </ul>
+                                            }
+                                        </CCardText>:
+                                        <CCardText>電圧データがありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                    </CRow>
+                    <CRow className="g-3">
+                        <CCol md={4}>
+                            <CCard className="mb-3 ">
+                                <CCardHeader className={style.status_title}>
+                                    稼働判定
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.judgment ?
+                                        <CCardText >
+                                            最終更新日: {device.judgment.updatedAt.toLocaleString()}
+                                            <CListGroup className="mt-3 ">
+                                                <CListGroupItem>
+                                                    IN1(thermalVertical):{device.judgment.status[0]?"High":"Low"}
+                                                </CListGroupItem>
+                                                <CListGroupItem>
+                                                    IN2(thermalDrawer):{device.judgment.status[1]?"High":"Low"}
+                                                </CListGroupItem>
+                                                <CListGroupItem>
+                                                    IN3(levelMax):{device.judgment.status[2]?"High":"Low"}
+                                                </CListGroupItem>
+                                                <CListGroupItem>
+                                                    IN4(levelMin):{device.judgment.status[3]?"High":"Low"}
+                                                </CListGroupItem>
+                                                <CListGroupItem>
+                                                    IN5(buzzerMax):{device.judgment.status[4]?"High":"Low"}
+                                                </CListGroupItem>
+                                            </CListGroup>
+                                        </CCardText>:
+                                        <CCardText>重量データがありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={4}>
+                            <CCard className="mb-3 ">
+                                <CCardHeader className={style.status_title}>
+                                    GPS
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.gps ?
+                                        <CCardText className={!device.gps.active? style.status_text_red : style.status_text}>
+                                            <ul className={"m-3"}>
+                                                {device.gps.active?"現在の位置":"以前に最終取得したときの位置　（現在未接続か位置確定前）"}
+                                                <li>経度:{device.gps.longitude}</li>
+                                                <li>緯度:{device.gps.latitude}</li>
+                                                <li>最終更新日:{device.gps.updatedAt.toLocaleString()}</li>
+                                                <li>住所:{device.address}</li>
+                                                <a href={'https://www.google.co.jp/maps/place/'+device.gps.latitude+','+device.gps.longitude} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary w-100 mt-2">設置場所（GoogleMapで開きます）</a>
+                                            </ul>
+                                        </CCardText>:
+                                        <CCardText>GPSデータがありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={4}>
+                            <CCard className="mb-3">
+                                <CCardHeader className={style.status_title}>
+                                    ADC
+                                </CCardHeader>
+                                <CCardBody>
+                                    {device.adc ?
+                                        <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
+                                            {device.adc.error.low ?
+                                                `計測下限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                device.adc.error.high ?
+                                                    `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                    <ul className={"m-3"}>
+                                                        <li>レベル:{device.adc.level}%</li>
+                                                        <li>最終更新日:{device.adc.updatedAt.toLocaleString()}</li>
+                                                    </ul>
+                                            }
+                                        </CCardText>:
+                                        <CCardText>ADCデータがありません</CCardText>
+                                    }
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                    </CRow>
+                    <CRow className="g-3">
+                        <CCol md={6}>
+                            <CCard className="mb-3">
+                                <CCardHeader className={style.status_title}>
+                                    動作履歴（最新10件）
+                                </CCardHeader>
+                                <CCardBody>
+                                    <HistoryList judgment={props.judgment.map(value => {
+                                        return {
+                                            title:value.title,
+                                            open_text:value.open.text,
+                                            close_text:value.close.text
+                                        }
+                                    })} deviceId={device.siloId}/>
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={6}>
+                            {device.gps?
+                                <Map
+                                    url="status"
+                                    latitude={device.gps.latitude}
+                                    longitude={device.gps.longitude}
+                                    list={[{
+                                        latitude:device.gps.latitude,
+                                        longitude:device.gps.longitude,
+                                        markerMessage:device.siloId,
+                                        error:false}]}
+                                />:<p>位置情報がありません</p>
+                            }
+                        </CCol>
+                    </CRow>
+                    <CRow className="g-3">
+                        <CCol md={6}>
+                            <CCard className="mb-3">
+                                <CCardHeader className={style.status_title}>
+                                    動作履歴（最新10件）
+                                </CCardHeader>
+                                <CCardBody>
+                                    {/*<SiloImage level={state%2 === 0?100:90} longitude={0} markerMessage={""} />*/}
+                                </CCardBody>
+                            </CCard>
+                        </CCol>
+                        <CCol md={6}>
+
+                        </CCol>
+                    </CRow>
+                    </BrowserView>
+                </main>
+                <div className={styles.buttonLayout}>
+                    <div className={indexStyle.bottom_button}>
+                        <Link href={"/status"}>
+                            <button type="button" className={"btn btn-primary rounded-pill"}>
+                                トップページへ
+                            </button>
+                        </Link>
+                    </div>
+                </div>
+            </>
+        );
+    }else{
+        if(errorMessage){
+           return( <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                    <meta name="description" content="昭和鋼機のサイロの重量を確認できます"/>
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <link rel="icon" href="/favicon.ico"/>
+                </Head>
+                <Header/>
+                <ErrorView errorMessage={errorMessage}/>
+               <div className={indexStyle.bottom_button}>
+                   <Link href={"/status"}>
+                       <button type="button" className={"btn btn-primary rounded-pill"}>
+                           トップページへ
+                       </button>
+                   </Link>
+               </div>
+            </>)
+        }
+        if (loading || checkLoading) {
+            console.log("loading...")
+            return <Loading/>;
+        }
+        return (
+            <>
+                <Head>
+                    <title>Smart Silo - {deviceId}</title>
+                    <meta name="description" content="昭和鋼機のサイロの重量を確認できます"/>
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <link rel="icon" href="/favicon.ico"/>
+                </Head>
+                <Header/>
+
+                <main className={styles.main}>
+                    <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
+                </main>
+                <div className={indexStyle.bottom_button}>
+                    <Link href={"/status"}>
+                        <button type="button" className={"btn btn-primary rounded-pill"}>
+                            トップページへ
+                        </button>
+                    </Link>
+                </div>
+            </>
+        )
+    }
+
+}
+
+export const getStaticPaths: GetStaticPaths<Params> = async () => {
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+    const deviceList = devicesJson.devices.map((value: JSONDevice)=>value.id) as string[]
+    return {
+        paths: deviceList.map(value => {return { params: { deviceId: value } }}),
+        fallback: false,
+    }
+}
+
+export const getStaticProps: ({params}: { params: { deviceId:string } }) => Promise<{ props: JSONSiloConfig }|void> = async ({ params }) => {
+    const deviceId = params?params.deviceId:"" as string
+
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+    const device = devicesJson.devices.find((value: JSONDevice)=>value.id === deviceId) as undefined | JSONDevice
+    if(device){
+        const data = devicesJson[device.type] as JSONSiloConfig
+        console.log(JSON.stringify(data))
+        return { props: data}
+    }
+    return
+}
+
+
+
+export default DevicePage;
