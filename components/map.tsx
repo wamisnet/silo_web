@@ -1,44 +1,55 @@
 import React from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { LatLng } from "leaflet";
+import {control, LatLng} from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {NextPage} from "next";
-
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { icon } from "leaflet"
+import zoom = control.zoom;
 
 
-const ICON = icon({
-    iconUrl: markerIcon.src,
-    iconAnchor: [13, 42],
+const ICON_BLUE = icon({
+    // iconUrl: "/image/map_marker_red.png",
+    iconUrl: "/image/map_marker_white.png",
+    iconAnchor: [23, 60],
+    // iconSize: [32, 32],
+})
+const ICON_RED = icon({
+    iconUrl: "/image/map_marker_red.png",
+    iconAnchor: [23, 60],
     // iconSize: [32, 32],
 })
 type Props = {
     latitude: number,
     longitude: number,
-    markerMessage:string
+    list:{
+        latitude: number,
+        longitude: number,
+        markerMessage:string
+        error:boolean
+    }[]
+    url:string
+    zoom?:number
 }
-
+//38.39645401060089, 136.7340068580923
 const Map:NextPage<Props> = (props) => {
     return (
         <MapContainer
             center={new LatLng(props.latitude, props.longitude)}
-            zoom={13}
+            zoom={props.zoom?props.zoom:13}
             scrollWheelZoom={false}
-            style={{ height: "50vh", width: "100%" }}
+            style={{ height: "55vh", width: "100%" }}
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker icon={ICON} position={[props.latitude, props.longitude]}>
-                <Popup>
-                    {props.markerMessage}
-                </Popup>
-            </Marker>
+            {props.list.map(value =>
+                <Marker icon={value.error?ICON_RED:ICON_BLUE} position={[value.latitude, value.longitude]} key={value.markerMessage}>
+                    <Popup>
+                        <a href={`/${props.url}/${value.markerMessage}`}>{value.markerMessage}</a>
+                    </Popup>
+                </Marker>)
+            }
         </MapContainer>
     );
 };
