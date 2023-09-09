@@ -1,0 +1,10 @@
+
+.none_display {
+    display: none !important;
+}
+
+.half_image {
+    height: 55vh;
+    width: 100%;
+    object-fit: contain;
+}
