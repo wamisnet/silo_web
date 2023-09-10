@@ -114,9 +114,9 @@ const SiloImage:NextPage<Props> = (props) => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 幅を設定
-            canvas.width = canvasContainerRef.current? canvasContainerRef.current.clientWidth:0;
-            canvas.height = imageBase.naturalHeight * (canvas.width / imageBase.naturalWidth);
-            ctx.setTransform(canvas.width / imageBase.width, 0, 0, canvas.width / imageBase.width, 0, 0);
+            const width = canvas.width = canvasContainerRef.current? canvasContainerRef.current.clientWidth:0;
+            canvas.height = imageBase.naturalHeight * (width / imageBase.naturalWidth);
+            ctx.setTransform(width / imageBase.width, 0, 0, width / imageBase.width, 0, 0);
 
             // canvasに描画
             const index = Math.floor(props.level/10) >= 10?10:Math.floor(props.level/10)
@@ -141,7 +141,7 @@ const SiloImage:NextPage<Props> = (props) => {
                         ctxMask.fillStyle = props.judgment[i]?props.color.judgment[i].close:props.color.judgment[i].open
                         ctxMask.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                         if(!props.judgment[i])
-                            diagonalLine(ctxMask,canvas.width,canvas.height)
+                            diagonalLine(ctxMask,CANVAS_WIDTH, CANVAS_HEIGHT)
                         ctxMask.strokeRect(90,90,100,100);
                         ctxMask.globalCompositeOperation = 'destination-in';
                         ctxMask.drawImage(imageJudgment, 0, 0);
@@ -167,12 +167,12 @@ const SiloImage:NextPage<Props> = (props) => {
                 <canvas ref={canvasMaskRef} className={style.none_display} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
             </div>
             <img src={imageUrl} alt={""} className={style.half_image}/>
-            <CButton color="info" onClick={async () => {
+            <CButton color="outline" onClick={async () => {
                 setImageLoad(false)
-                // await wait(10);
+                await new Promise(resolve => setTimeout(resolve, 100))
                 setImageLoad(true)
             }}>
-                再描画
+                サイロの表示がおかしくなったら押してください
             </CButton>
         </>
     );
