@@ -1,10 +1,9 @@
 import React from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import {control, LatLng} from "leaflet";
+import {MapContainer, Marker, Popup, TileLayer} from "react-leaflet";
+import {control, icon, LatLng} from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {NextPage} from "next";
-import { icon } from "leaflet"
-import zoom = control.zoom;
+import {ViewErrorEnum} from "../type/dataType";
 
 
 const ICON_BLUE = icon({
@@ -25,7 +24,7 @@ type Props = {
         latitude: number,
         longitude: number,
         markerMessage:string
-        error:boolean
+        error:ViewErrorEnum
     }[]
     url:string
     zoom?:number
@@ -44,7 +43,7 @@ const Map:NextPage<Props> = (props) => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {props.list.map(value =>
-                <Marker icon={value.error?ICON_RED:ICON_BLUE} position={[value.latitude, value.longitude]} key={value.markerMessage}>
+                <Marker icon={value.error == ViewErrorEnum.ERROR?ICON_RED:value.error == ViewErrorEnum.ACCEPT?ICON_BLUE:ICON_BLUE} position={[value.latitude, value.longitude]} key={value.markerMessage}>
                     <Popup>
                         <a href={`/${props.url}/${value.markerMessage}`}>{value.markerMessage}</a>
                     </Popup>

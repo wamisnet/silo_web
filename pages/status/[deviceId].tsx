@@ -7,7 +7,7 @@ import InfoCardView from "../../layout/InfoCardView";
 import dynamic from "next/dynamic";
 import {onSnapshot,collection, query, where} from "firebase/firestore";
 import {auth, firestore, functions} from "../../components/Firebase";
-import {DeviceInfo, JSONDevice, JSONSiloConfig} from "../../type/dataType";
+import {DeviceInfo, JSONDevice, JSONSiloConfig, ViewErrorEnum} from "../../type/dataType";
 import Loading from "../../components/loading";
 import { httpsCallable } from "firebase/functions";
 import ErrorView from "../../layout/ErrorView";
@@ -237,11 +237,11 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                     ADC
                                 </CCardHeader>
                                 <CCardBody>
-                                    {device.adc ?
+                                    {device.adc && props.level?
                                         <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
-                                            {device.adc.error.low ?
+                                            {props.level.alert.min > device.adc.level ?
                                                 `計測下限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                device.adc.error.high ?
+                                                props.level.alert.max < device.adc.level ?
                                                     `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
                                                     <ul className={"m-3"}>
                                                         <li>レベル:{device.adc.level}%</li>
@@ -282,7 +282,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         latitude:device.gps.latitude,
                                         longitude:device.gps.longitude,
                                         markerMessage:device.siloId,
-                                        error:false}]}
+                                        error:ViewErrorEnum.NONE}]}
                                 />:<p>位置情報がありません</p>
                             }
                         </CCol>

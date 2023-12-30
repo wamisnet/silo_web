@@ -36,7 +36,7 @@ const HistoryList:NextPage<Props> = (props) => {
                 query(
                     collection(doc(collection(firestore, "v2devices"),props.deviceId),"operation_histories"),
                     orderBy("createAt", "desc"),
-                    limit(10)
+                    limit(30)
                 ), (query) => {
                     if(query.empty){
                         console.log("empty")

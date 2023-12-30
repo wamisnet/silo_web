@@ -45,12 +45,8 @@ export type DeviceInfo = {
     user?:string[] // 権限所持してるユーザを確認できる
     currentPositionStartTime?:Date//住所変更があったあと初回起動日時
     adc?:{
-        level:number// ADC Level 0-100
+        level:number// ADC Level
         active:boolean//動作状態
-        error:{
-            low:boolean
-            high:boolean
-        }
         updatedAt:Date//最終更新日時
     }
 }
@@ -78,6 +74,13 @@ export type JSONDevice = {
     type:string
 }
 
+export type JSONFile = {
+    devices:JSONDevice[]
+    stvn:JSONSiloConfig
+    "stvn-level":JSONSiloConfig
+}
+
+
 export type JSONSiloConfig = {
     name:string
     description:string
@@ -85,6 +88,20 @@ export type JSONSiloConfig = {
     weight?:{
         max:number
         min:number
+    }
+    level?:{
+        max:{
+            adc:number
+            height:number
+        }
+        min:{
+            adc:number
+            height:number
+        }
+        alert:{
+            max:number
+            min:number
+        }
     }
     baseImage:string
     levelImage?:{
@@ -106,6 +123,13 @@ export type JSONSiloConfig = {
         title:string
         description:string
         active:boolean
+        accept:"open"|"close"|""
         error:"open"|"close"|""
     }[]
+}
+
+export enum ViewErrorEnum {
+    ERROR,
+    ACCEPT,
+    NONE
 }

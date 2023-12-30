@@ -117,3 +117,7 @@ a {
   margin: 0;
   right: 10px;
 }
+
+.right-align{
+  text-align: right;
+}

@@ -5,25 +5,40 @@ import InfoCardView from "../layout/InfoCardView";
 import indexStyle from "./index.module.css"
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {
-    CButton, CCard, CCardBody, CCardText, CCol, CFormInput,
-    CRow, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow
+    CButton,
+    CCard,
+    CCardBody,
+    CCardText,
+    CCol,
+    CFormInput,
+    CRow,
+    CTable,
+    CTableBody,
+    CTableDataCell,
+    CTableHead,
+    CTableHeaderCell,
+    CTableRow
 } from "@coreui/react";
-import {collection, where, query, startAt, endBefore, limit, orderBy, onSnapshot} from "firebase/firestore";
+import {collection, endBefore, limit, onSnapshot, orderBy, query, startAt, where} from "firebase/firestore";
 import Link from "next/link";
-import {DeviceInfo} from "../type/dataType";
+import {DeviceInfo, JSONDevice, JSONFile, JSONSiloConfig, ViewErrorEnum} from "../type/dataType";
 import {auth, firestore} from "../components/Firebase";
 import Loading from "../components/loading";
 import ErrorView from "../layout/ErrorView";
 import {toDeviceInfo} from "../type/convert";
 import {useRouter} from "next/router";
-import {MobileView,BrowserView} from "react-device-detect";
+import {BrowserView, MobileView} from "react-device-detect";
 import {FirestoreError} from "@firebase/firestore";
 import dynamic from "next/dynamic";
+import path from "node:path";
+import fsPromises from "fs/promises";
+import {NextPage} from "next";
+
 type FormData = {
     siloId: string
     serialNumber: string
 }
-export default function Home() {
+const Home:NextPage<JSONFile | undefined> = (props) => {
     const PAGE_DATA = 25
     const [formData, setFormData] = useState<FormData>({
         siloId: "",
@@ -107,17 +122,68 @@ export default function Home() {
         return <Loading/>;
     }
 
-    if(deviceInfos.length != 0) {
+    if(deviceInfos.length != 0 && props?.devices != undefined) {
         const infos = mode === "back"? (deviceInfos.slice().reverse()).slice(0,PAGE_DATA) : deviceInfos.slice(0,PAGE_DATA)
         console.log("infos",mode,deviceInfos.length,page_key,siloId,serialNumber,(infos) ,deviceInfos)
-        // @ts-ignore
-        const list = infos.filter(value => value.gps) as {siloId:string,gps:{latitude:number,longitude:number}}[]
-        const gpsList = list.map(value => {
+        const infoList = infos.map(value =>{
+            const device = props.devices.find((jsonDevice: JSONDevice)=>jsonDevice.id === value.siloId) as undefined | JSONDevice
+            let data = undefined
+            if(device) {
+                const json = props as any
+                data = json[device.type] as JSONSiloConfig
+            }
+            let error:ViewErrorEnum = ViewErrorEnum.NONE
+            if(data != undefined){
+                for(let i = 0;i<data.judgment.length;i++){
+                    const judgment = data.judgment[i]
+                    const status = value.judgment?.status[i]
+                    if(judgment.active && status != undefined){
+                        switch(judgment.accept){
+                            case "":
+                                break
+                            case "close":
+                                if(status){
+                                    error = ViewErrorEnum.ACCEPT
+                                }
+                                break
+                            case "open":
+                                if(!status){
+                                    error = ViewErrorEnum.ACCEPT
+                                }
+                                break
+                        }
+                    }
+                }
+                for(let i = 0;i<data.judgment.length;i++){
+                    const judgment = data.judgment[i]
+                    const status = value.judgment?.status[i]
+                    if(judgment.active && status != undefined){
+                        switch(judgment.error){
+                            case "":
+                                break
+                            case "close":
+                                if(status){
+                                    error = ViewErrorEnum.ERROR
+                                }
+                                break
+                            case "open":
+                                if(!status){
+                                    error = ViewErrorEnum.ERROR
+                                }
+                                break
+                        }
+                    }
+                }
+            }
+            return {data:value,config:data,error}
+        })
+        const gpsListTmp = infoList.filter(value => value.data.gps)
+        const gpsList = gpsListTmp.map(value => {
             return {
-                latitude: value.gps.latitude,
-                longitude: value.gps.longitude,
-                markerMessage: value.siloId,
-                error:false
+                latitude: value.data.gps!.latitude,
+                longitude: value.data.gps!.longitude,
+                markerMessage: value.data.siloId,
+                error:value.error
             }
         })
         return (
@@ -165,21 +231,42 @@ export default function Home() {
                                     <CTableHeaderCell scope="col">管理番号</CTableHeaderCell>
                                     <CTableHeaderCell scope="col">住所</CTableHeaderCell>
                                     <CTableHeaderCell scope="col">開始日時</CTableHeaderCell>
-                                    <CTableHeaderCell scope="col">残量</CTableHeaderCell>
+                                    <CTableHeaderCell scope="col" className="right-align">残量</CTableHeaderCell>
                                     {/*<CTableHeaderCell scope="col">サーマル(竪SC)</CTableHeaderCell>*/}
                                     {/*<CTableHeaderCell scope="col">サーマル(引出SC)</CTableHeaderCell>*/}
                                     {/*<CTableHeaderCell scope="col">電圧</CTableHeaderCell>*/}
                                 </CTableRow>
                             </CTableHead>
                             <CTableBody>
-                                {infos.map(value=> {
+                                {infoList.map(value=> {
                                     return (
-                                        <CTableRow onClick={()=>{setLoading(true);router.push("/user/" + value.siloId)}} className={indexStyle.table_link} key={value.siloId}>
-                                            <CTableDataCell>{value.siloId}</CTableDataCell>
-                                            <CTableDataCell>{value.serialNumber}</CTableDataCell>
-                                            <CTableDataCell>{value.address?value.address:"住所なし"}</CTableDataCell>
-                                            <CTableDataCell>{value.currentPositionStartTime?value.currentPositionStartTime.toLocaleString():""}</CTableDataCell>
-                                            <CTableDataCell>{value.scale?value.scale.active?Math.round(value.scale.weight).toLocaleString()+"kg":"未接続":value.adc?value.adc.active?value.adc.level+"%":"未接続":"未接続"}</CTableDataCell>
+                                        <CTableRow onClick={()=>{setLoading(true);router.push("/user/" + value.data.siloId)}} className={indexStyle.table_link} key={value.data.siloId}>
+                                            <CTableDataCell className={value.error == ViewErrorEnum.ERROR?styles.text_red:value.error == ViewErrorEnum.ACCEPT?styles.text_green:styles.text_black}>{value.data.siloId}</CTableDataCell>
+                                            <CTableDataCell>{value.data.serialNumber}</CTableDataCell>
+                                            <CTableDataCell>{value.data.address?value.data.address:"住所なし"}</CTableDataCell>
+                                            <CTableDataCell>{value.data.currentPositionStartTime?value.data.currentPositionStartTime.toLocaleString():""}</CTableDataCell>
+                                            {value.config?.levelType === "weight" ?
+                                                <CTableDataCell className="right-align" >
+                                                    {value.data.scale && value.data.scale.active?
+                                                        Math.round(value.data.scale.weight).toLocaleString()+"kg"
+                                                        :"未接続"
+                                                    }</CTableDataCell>
+
+                                                :<></>
+                                            }
+                                            {value.config?.levelType === "level" ?
+                                                <CTableDataCell className="right-align" >{
+                                                    value.data.adc && value.data.adc.active && value.config?.level != undefined?
+                                                        value.config.level.alert.min > value.data.adc.level ?
+                                                            "未接続":
+                                                            value.config.level.alert.max < value.data.adc.level ?
+                                                                "計測上限"
+                                                                :((value.data.adc.level - value.config.level.min.adc) * ( value.config.level.max.height - value.config.level.min.height) / (value.config.level.max.adc - value.config.level.min.adc) + value.config.level.min.height).toFixed(2)+"m"
+                                                    :"未接続"
+                                                }</CTableDataCell>
+
+                                                :<></>
+                                            }
                                         </CTableRow>
                                     )}
                                 )}
@@ -247,3 +334,14 @@ export default function Home() {
     }
 
 }
+
+export const getStaticProps: () => Promise<{ props: JSONSiloConfig }|void> = async () => {
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+
+    return { props: devicesJson}
+}
+
+export default Home;

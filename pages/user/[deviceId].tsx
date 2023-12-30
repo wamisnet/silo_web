@@ -7,7 +7,7 @@ import InfoCardView from "../../layout/InfoCardView";
 import dynamic from "next/dynamic";
 import {onSnapshot,collection, query, where} from "firebase/firestore";
 import {auth, firestore, functions} from "../../components/Firebase";
-import {DeviceInfo, JSONDevice, JSONSiloConfig} from "../../type/dataType";
+import {DeviceInfo, JSONDevice, JSONSiloConfig, ViewErrorEnum} from "../../type/dataType";
 import Loading from "../../components/loading";
 import ErrorView from "../../layout/ErrorView";
 import indexStyle from "../index.module.css";
@@ -37,6 +37,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
     const {deviceId,token} = router.query
     const [viewDetail,setViewDetail] = useState(false)
     const [loading,setLoading] = useState(true)
+    const [online,setOnline] = useState(false)
     const [device,setDevice] = useState<DeviceInfo|undefined>(undefined)
     const [errorMessage,setErrorMessage] = useState("")
     // const [state, setState] = useState<number>(0);
@@ -85,11 +86,16 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                         console.log("empty")
                     }else {
                         query.forEach(doc => {
-                                const data = doc.data()
-                                console.log("Current data: ", data, doc.id)
-                                setDevice(toDeviceInfo(doc))
+                            const data = doc.data()
+                            console.log("Current data: ", data, doc.id)
+                            const device = toDeviceInfo(doc)
+                            setDevice(device)
+                            if (device.updatedAt != undefined) {
+                                const localTime = new Date();
+                                const differenceInMinutes = (localTime.getTime() - device.updatedAt.getTime()) / (1000 * 60)
+                                setOnline(Math.abs(differenceInMinutes) <= 25)
                             }
-                        )
+                        })
                     }
                     setLoading(false)
                 })
@@ -106,6 +112,13 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
             }),
         []
     );
+    useInterval(()=>{
+        if (device?.updatedAt != undefined) {
+            const localTime = new Date();
+            const differenceInMinutes = (localTime.getTime() - device.updatedAt.getTime()) / (1000 * 60)
+            setOnline(Math.abs(differenceInMinutes) <= 25)
+        }
+    },60000)
 
     if(device && props) {
         return (
@@ -128,6 +141,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         <li>管理番号: {device.serialNumber?device.serialNumber:"未設定"}</li>
                                         <li>始動日: {device.currentPositionStartTime?device.currentPositionStartTime.toLocaleString():"未開始"}</li>
                                         <li>更新日: {device.updatedAt?device.updatedAt.toLocaleString():"最終更新日がありません"}</li>
+                                        <li>通信状況 : {online? <div style={{ color: 'green' ,display:"contents" }}>● OK</div>: <div style={{ color: 'red' ,display:"contents" }}>× NG</div>}</li>
                                     </ul>
                                     <SiloImage level={Math.round(props.levelType === "weight"?
                                         device.scale?(device.scale.weight / (props.weight? props.weight.max:0))*100 : 0 :
@@ -163,14 +177,14 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         :<></>
                                     }
                                     {props.levelType === "level" ?
-                                        device.adc?
+                                        device.adc && props.level?
                                             <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
-                                                {device.adc.error.low ?
+                                                {props.level.alert.min > device.adc.level ?
                                                     `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
-                                                    device.adc.error.high ?
+                                                    props.level.alert.max < device.adc.level ?
                                                         `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
                                                         <ul className={"m-3 mb-0"}>
-                                                            <li>レベル:{device.adc.level}%</li>
+                                                            <li>レベル:{((device.adc.level - props.level.min.adc) * ( props.level.max.height - props.level.min.height) / (props.level.max.adc - props.level.min.adc) + props.level.min.height).toFixed(2)}m</li>
                                                             <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
                                                         </ul>
                                                 }
@@ -207,7 +221,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                                     latitude:device.gps.latitude,
                                                     longitude:device.gps.longitude,
                                                     markerMessage:device.siloId,
-                                                    error:false
+                                                    error:ViewErrorEnum.NONE
                                                 }]}
                                             />
 
@@ -275,7 +289,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
 
                                 <CCard className="mb-3">
                                     <CCardHeader className={style.status_title}>
-                                        動作履歴（最新10件）
+                                        動作履歴（最新30件）
                                     </CCardHeader>
                                     <CCardBody>
                                         <HistoryList judgment={props.judgment.map(value => {

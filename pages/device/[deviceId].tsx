@@ -7,7 +7,7 @@ import InfoCardView from "../../layout/InfoCardView";
 import dynamic from "next/dynamic";
 import {onSnapshot,collection, query, where} from "firebase/firestore";
 import {auth, firestore, functions} from "../../components/Firebase";
-import {DeviceInfo, JSONDevice, JSONSiloConfig} from "../../type/dataType";
+import {DeviceInfo, JSONDevice, JSONSiloConfig, ViewErrorEnum} from "../../type/dataType";
 import Loading from "../../components/loading";
 import { httpsCallable } from "firebase/functions";
 import ErrorView from "../../layout/ErrorView";
@@ -103,7 +103,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                 latitude:device.gps.latitude,
                                 longitude:device.gps.longitude,
                                 markerMessage:device.siloId,
-                                error:false}]}
+                                error:ViewErrorEnum.NONE}]}
                         />:<p>位置情報がありません</p>
                     }
 
