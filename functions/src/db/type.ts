@@ -14,3 +14,16 @@ export interface DeviceToken {
   devices:string[]
   token:string
 }
+
+export interface DeviceEditConfig {
+  userEditName:string
+  siloInfo:EditableSiloDeviceInfo
+  silo2Info:EditableSiloDeviceInfo
+  silo3Info:EditableSiloDeviceInfo
+}
+
+export type EditableSiloDeviceInfo = {
+  cementType:"normal"|"blast-furnace"|"high-early-strength"|"fly-ash"|"other"
+  name:string
+  maxCapacity:number
+}

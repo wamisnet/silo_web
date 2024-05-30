@@ -1,4 +1,84 @@
 {
+    "center_devices": [
+        {
+            "id": "STC-01",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "STC-02",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "SD324001",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "SD324002",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "SD324003",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "SD324004",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        },{
+            "id": "SD324005",
+            "silo1": {
+                "type": "stvn-level"
+            },
+            "silo2": {
+                "type": "stvn-level"
+            },
+            "silo3": {
+                "type": "stvn-level"
+            }
+        }
+    ],
     "devices": [
         {
             "id": "ST-01",
@@ -36,6 +116,36 @@
         },{
             "id": "STVN-3937U",
             "type": "stvn"
+        },{
+            "id": "STVN-2038",
+            "type": "stvn"
+        },{
+            "id": "STVN-3915",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4004U",
+            "type": "stvn"
+        },{
+            "id": "STVN-4005U",
+            "type": "stvn"
+        },{
+            "id": "STVN-4017U",
+            "type": "stvn"
+        },{
+            "id": "STVN-4018U",
+            "type": "stvn"
+        },{
+            "id": "STVN-4025U",
+            "type": "stvn"
+        },{
+            "id": "STVN-4026U",
+            "type": "stvn"
+        },{
+            "id": "STVN-3323U",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-3772U",
+            "type": "stvn-level"
         }
     ],
     "stvn": {
@@ -162,13 +272,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN6",
                 "description": "",
                 "active": false,
                 "accept": "",
@@ -178,13 +288,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN7",
                 "description": "",
                 "active": false,
                 "accept": "",
@@ -194,13 +304,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN8",
                 "description": "",
                 "active": false,
                 "accept": "",
@@ -212,17 +322,21 @@
         "name": "昭和鋼機スマートサイロ",
         "description": "昭和鋼機の説明",
         "levelType": "level",
+        "weight": {
+            "max": 30000,
+            "min": 3000
+        },
         "level": {
             "max": {
-                "adc": 300,
-                "height": 0
+                "adc": 455,
+                "height": 6
             },
             "min": {
-                "adc":50,
-                "height": 20
+                "adc":85,
+                "height": 0
             },
             "alert": {
-                "max": 300,
+                "max": 490,
                 "min": 40
             }
         },
@@ -342,13 +456,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN6",
                 "description": "",
                 "active": false,
                 "accept": "",
@@ -358,13 +472,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN7",
                 "description": "",
                 "active": false,
                 "accept": "",
@@ -374,13 +488,13 @@
                 "mask": "",
                 "open": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "open"
                 },
                 "close": {
                     "color": "#fff",
-                    "text": ""
+                    "text": "close"
                 },
-                "title": "",
+                "title": "IN8",
                 "description": "",
                 "active": false,
                 "accept": "",

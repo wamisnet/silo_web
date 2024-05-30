@@ -67,6 +67,12 @@ export function toDeviceInfo(doc: QueryDocumentSnapshot<DocumentData>): DeviceIn
   if(info.adc){
     info.adc.updatedAt =  (info.adc.updatedAt as any as Timestamp).toDate();
   }
+  if(info.adc2){
+    info.adc2.updatedAt =  (info.adc2.updatedAt as any as Timestamp).toDate();
+  }
+  if(info.adc3){
+    info.adc3.updatedAt =  (info.adc3.updatedAt as any as Timestamp).toDate();
+  }
   if(info.oldGps){
     if(info.oldGps.address){
       info.oldGps.address.updatedAt =  (info.oldGps.address.updatedAt as any as Timestamp).toDate();

@@ -161,7 +161,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         })
                                     }}　 />
 
-                                    {props.levelType === "weight" ?
+                                    {props.levelType === "weight" || props.levelType === "level" ?
                                         device.scale  && props.weight ?
                                             <CCardText
                                                 className={device.scale.weight < props.weight.min || device.scale.weight > props.weight.max || !device.scale.active ? style.status_text_red : style.status_text}>
@@ -179,16 +179,26 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                     {props.levelType === "level" ?
                                         device.adc && props.level?
                                             <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
-                                                {props.level.alert.min > device.adc.level ?
-                                                    `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
-                                                    props.level.alert.max < device.adc.level ?
-                                                        `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                        <ul className={"m-3 mb-0"}>
-                                                            <li>レベル:{((device.adc.level - props.level.min.adc) * ( props.level.max.height - props.level.min.height) / (props.level.max.adc - props.level.min.adc) + props.level.min.height).toFixed(2)}m</li>
-                                                            <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
-                                                        </ul>
+                                                {
+                                                    props.level.alert.min > device.adc.level ?
+                                                        `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
+                                                        device.configs?.adc?//DBに固有のADC補正値がある場合
+                                                            device.configs.adc.max_error < device.adc.level ?
+                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                                <ul className={"m-3 mb-0"}>
+                                                                    <li>レベル:{((device.adc.level - device.configs.adc.min) * ( props.level.max.height - props.level.min.height) / (device.configs.adc.max - device.configs.adc.min) + props.level.min.height).toFixed(2)}m</li>
+                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
+                                                                </ul>
+                                                        ://DBに固有の補正値がない場合
+                                                            props.level.alert.max < device.adc.level ?
+                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                                <ul className={"m-3 mb-0"}>
+                                                                    <li>レベル:{((device.adc.level - props.level.min.adc) * ( props.level.max.height - props.level.min.height) / (props.level.max.adc - props.level.min.adc) + props.level.min.height).toFixed(2)}m</li>
+                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
+                                                                </ul>
                                                 }
-                                            </CCardText>:
+                                            </CCardText>
+                                               :
                                             <CCardText>ADCデータがありません</CCardText>
                                         :<></>
                                     }
@@ -243,7 +253,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                     <CCardBody>
                                         {device.power ?
                                             <CCardText
-                                                className={device.power.voltage < 200 || device.power.voltage > 230 || device.power.error.high || device.power.error.low ? style.status_text_red : style.status_text}>
+                                                className={Math.round(device.power.voltage) < 200 || Math.round(device.power.voltage) > 230 || device.power.error.high || device.power.error.low ? style.status_text_red : style.status_text}>
                                                 {device.power.error.low ?
                                                     "未接続か計測下限です" :
                                                     device.power.error.high ?

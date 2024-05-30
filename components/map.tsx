@@ -6,16 +6,21 @@ import {NextPage} from "next";
 import {ViewErrorEnum} from "../type/dataType";
 
 
-const ICON_BLUE = icon({
-    // iconUrl: "/image/map_marker_red.png",
+const ICON_WHITE = icon({
     iconUrl: "/image/map_marker_white.png",
     iconAnchor: [23, 60],
-    // iconSize: [32, 32],
 })
 const ICON_RED = icon({
     iconUrl: "/image/map_marker_red.png",
     iconAnchor: [23, 60],
-    // iconSize: [32, 32],
+})
+const ICON_GREEN = icon({
+    iconUrl: "/image/map_marker_green.png",
+    iconAnchor: [23, 60],
+})
+const ICON_PINK = icon({
+    iconUrl: "/image/map_marker_pink.png",
+    iconAnchor: [23, 60],
 })
 type Props = {
     latitude: number,
@@ -43,7 +48,7 @@ const Map:NextPage<Props> = (props) => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {props.list.map(value =>
-                <Marker icon={value.error == ViewErrorEnum.ERROR?ICON_RED:value.error == ViewErrorEnum.ACCEPT?ICON_BLUE:ICON_BLUE} position={[value.latitude, value.longitude]} key={value.markerMessage}>
+                <Marker icon={value.error == ViewErrorEnum.ERROR?ICON_RED:value.error == ViewErrorEnum.ACCEPT?ICON_GREEN:ICON_WHITE} position={[value.latitude, value.longitude]} key={value.markerMessage}>
                     <Popup>
                         <a href={`/${props.url}/${value.markerMessage}`}>{value.markerMessage}</a>
                     </Popup>

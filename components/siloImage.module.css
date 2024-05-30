@@ -8,3 +8,9 @@
     width: 100%;
     object-fit: contain;
 }
+
+.half_image_center {
+    max-height: 20vh;
+    width: 100%;
+    object-fit: contain;
+}

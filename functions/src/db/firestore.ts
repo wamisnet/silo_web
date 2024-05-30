@@ -1,6 +1,6 @@
 import admin from "../Firebase";
 import {toTokens} from "./convert";
-import {DeviceToken} from "./type";
+import {DeviceEditConfig, DeviceToken} from "./type";
 const db = admin.firestore();
 db.settings({ ignoreUndefinedProperties: true });
 
@@ -22,4 +22,8 @@ export const deleteDeviceOnceUser = async (dbId: string, uid:string) => {
 
 export const clearDeviceOnceUser = async (dbId: string) => {
   await db.collection("v2devices").doc(dbId).update("onceUser",[])
+};
+
+export const editDeviceConfig = async (dbId: string,config:DeviceEditConfig) => {
+    await db.collection("v2devices").doc(dbId).update(config)
 };

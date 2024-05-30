@@ -245,7 +245,7 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
                                             <CTableDataCell>{value.data.serialNumber}</CTableDataCell>
                                             <CTableDataCell>{value.data.address?value.data.address:"住所なし"}</CTableDataCell>
                                             <CTableDataCell>{value.data.currentPositionStartTime?value.data.currentPositionStartTime.toLocaleString():""}</CTableDataCell>
-                                            {value.config?.levelType === "weight" ?
+                                            {value.config?.levelType === "weight" || value.config?.levelType === "level" ?
                                                 <CTableDataCell className="right-align" >
                                                     {value.data.scale && value.data.scale.active?
                                                         Math.round(value.data.scale.weight).toLocaleString()+"kg"
@@ -254,19 +254,19 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
 
                                                 :<></>
                                             }
-                                            {value.config?.levelType === "level" ?
-                                                <CTableDataCell className="right-align" >{
-                                                    value.data.adc && value.data.adc.active && value.config?.level != undefined?
-                                                        value.config.level.alert.min > value.data.adc.level ?
-                                                            "未接続":
-                                                            value.config.level.alert.max < value.data.adc.level ?
-                                                                "計測上限"
-                                                                :((value.data.adc.level - value.config.level.min.adc) * ( value.config.level.max.height - value.config.level.min.height) / (value.config.level.max.adc - value.config.level.min.adc) + value.config.level.min.height).toFixed(2)+"m"
-                                                    :"未接続"
-                                                }</CTableDataCell>
+                                            {/*{value.config?.levelType === "level" ?*/}
+                                            {/*    <CTableDataCell className="right-align" >{*/}
+                                            {/*        value.data.adc && value.data.adc.active && value.config?.level != undefined?*/}
+                                            {/*            value.config.level.alert.min > value.data.adc.level ?*/}
+                                            {/*                "未接続":*/}
+                                            {/*                value.config.level.alert.max < value.data.adc.level ?*/}
+                                            {/*                    "計測上限"*/}
+                                            {/*                    :((value.data.adc.level - value.config.level.min.adc) * ( value.config.level.max.height - value.config.level.min.height) / (value.config.level.max.adc - value.config.level.min.adc) + value.config.level.min.height).toFixed(2)+"m"*/}
+                                            {/*        :"未接続"*/}
+                                            {/*    }</CTableDataCell>*/}
 
-                                                :<></>
-                                            }
+                                            {/*    :<></>*/}
+                                            {/*}*/}
                                         </CTableRow>
                                     )}
                                 )}

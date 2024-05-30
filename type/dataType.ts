@@ -44,11 +44,24 @@ export type DeviceInfo = {
     onceUser?:string[] // 重量計アプリで使用 prevと差分があれば削除する
     user?:string[] // 権限所持してるユーザを確認できる
     currentPositionStartTime?:Date//住所変更があったあと初回起動日時
-    adc?:{
-        level:number// ADC Level
-        active:boolean//動作状態
-        updatedAt:Date//最終更新日時
+    adc?:ADCScanData
+    adc2?:ADCScanData
+    adc3?:ADCScanData
+    configs?:{
+        adc?:ADCConfig
+        adc2?:ADCConfig
+        adc3?:ADCConfig
     }
+    userEditName?:string //各自で編集可能な名前
+    siloInfo?:EditableSiloDeviceInfo
+    silo2Info?:EditableSiloDeviceInfo
+    silo3Info?:EditableSiloDeviceInfo
+}
+
+export type EditableSiloDeviceInfo = {
+    cementType?:"normal"|"blast-furnace"|"high-early-strength"|"fly-ash"|"other"
+    name?:string
+    maxCapacity?:number
 }
 
 export type DeviceToken = {
@@ -74,12 +87,43 @@ export type JSONDevice = {
     type:string
 }
 
+export type JSONCenterDevice = {
+    id:string
+    silo1:{
+        type:string
+        //補正できるようにする
+    }
+    silo2:{
+        type:string
+    }
+    silo3:{
+        type:string
+    }
+}
+
 export type JSONFile = {
     devices:JSONDevice[]
     stvn:JSONSiloConfig
     "stvn-level":JSONSiloConfig
+    center_devices:JSONCenterDevice[]
 }
 
+export type Type3SiloConfig = {
+    silo1:JSONSiloConfig,
+    silo2:JSONSiloConfig,
+    silo3:JSONSiloConfig
+}
+
+export type ADCConfig = {
+    max:number
+    min:number
+    max_error:number
+}
+export type ADCScanData = {
+    level:number// ADC Level
+    active:boolean//動作状態
+    updatedAt:Date//最終更新日時
+}
 
 export type JSONSiloConfig = {
     name:string
