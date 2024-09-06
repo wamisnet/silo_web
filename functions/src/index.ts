@@ -57,9 +57,6 @@ export const editSiloConfig = functions.region("asia-northeast2").https.onCall(a
     }
     console.log('editSiloConfig context.auth.uid: ' + context.auth.uid + docId)
     const userEditName = data.deviceInfo?.userEditName as string | undefined
-    if (!userEditName) {
-        throw new functions.https.HttpsError('invalid-argument', 'userEditName params not found');
-    }
     const info = checkEditableSiloDeviceInfo(data.deviceInfo?.siloInfo?.cementType,data.deviceInfo?.siloInfo?.name,data.deviceInfo?.siloInfo?.maxCapacity?Number(data.deviceInfo?.siloInfo?.maxCapacity):0)
     if(!info)
         throw new functions.https.HttpsError('invalid-argument', 'siloInfo params not found');
@@ -69,8 +66,10 @@ export const editSiloConfig = functions.region("asia-northeast2").https.onCall(a
     const info3 = checkEditableSiloDeviceInfo(data.deviceInfo?.silo3Info?.cementType,data.deviceInfo?.silo3Info?.name,data.deviceInfo?.silo3Info?.maxCapacity?Number(data.deviceInfo?.silo3Info?.maxCapacity):0)
     if(!info3)
         throw new functions.https.HttpsError('invalid-argument', 'siloInfo3 params not found');
+    const serialNumber = data.deviceInfo?.serialNumber as string | undefined
 
     await editDeviceConfig(docId,{
+        serialNumber,
         userEditName,
         siloInfo: info,
         silo2Info: info2,

@@ -19,7 +19,7 @@ import {
     CCardBody,
     CCardHeader,
     CCardText,
-    CCol,
+    CCol, CFormInput,
     CRow
 } from "@coreui/react";
 import style from "../../layout/InfoCardView.module.css";
@@ -32,6 +32,7 @@ import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
 import {GetStaticPaths, NextPage} from "next";
 import useInterval from "use-interval";
 import {httpsCallable} from "firebase/functions";
+import {usePageLeaveConfirmation} from "../../components/usePageLeaveConfirmation";
 const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
     const router = useRouter()
     const {deviceId,token} = router.query
@@ -40,20 +41,6 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
     const [online,setOnline] = useState(false)
     const [device,setDevice] = useState<DeviceInfo|undefined>(undefined)
     const [errorMessage,setErrorMessage] = useState("")
-    // const [state, setState] = useState<number>(0);
-    // useInterval(() => {
-    //     setState((value) =>value >= 100?0:value + 10);
-    // }, 20000);
-    // <SiloImage level={state} judgment={[
-    //     state===10,
-    //     state===20,
-    //     state===30,
-    //     state===40,
-    //     state===50,
-    //     state===60,
-    //     state===70,
-    //     state===80,
-    // ]}
 
     useEffect(() => {
         // Update the document title using the browser API
@@ -120,7 +107,92 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
         }
     },60000)
 
+    const [isDirty ,setDirty] = useState(false)
+
+    const handleEditOnChange = async (event: any) => {
+        setDirty(true)
+        console.log("handleEditOnChange",event)
+    }
+
+    usePageLeaveConfirmation(!isDirty)
+
+    const handleCommandSubmit = async (event: any) => {
+        event.preventDefault()
+        if(!isDirty)return
+        let deviceInfo = device?device:{} as DeviceInfo
+        deviceInfo.serialNumber = event.target.serialNumber.value
+        deviceInfo.userEditName = undefined
+
+        let maxCapacity: number;
+        if (!props) {
+            maxCapacity = 20
+        }else if (props.deviceType === "smartSilo"){
+            maxCapacity = device?.siloInfo?.maxCapacity ?? 20;
+        } else {
+            maxCapacity = Number(event.target.silo1_max_capacity.value);
+        }
+        deviceInfo.siloInfo = deviceInfo.siloInfo ?? {
+            cementType: "normal",
+            name: "未設定1",
+            maxCapacity: 20
+        }
+        deviceInfo.siloInfo.maxCapacity = maxCapacity
+        deviceInfo.silo2Info = deviceInfo.silo2Info ?? {
+            cementType: "normal",
+            name: "未設定2",
+            maxCapacity: 20
+        };
+
+        deviceInfo.silo3Info = deviceInfo.silo3Info ?? {
+            cementType: "normal",
+            name: "未設定3",
+            maxCapacity: 20
+        };
+        console.log(deviceInfo)
+        try {
+            setLoading(true)
+            const requestSilo = httpsCallable(functions, 'editSiloConfig');
+            await requestSilo({docId: deviceId, deviceInfo})
+            // setDevice(deviceInfo)
+            console.log("requestSilo success")
+            setDirty(false)
+        }catch (e:any) {
+            if(e.code == "functions/permission-denied" || e.code == "functions/invalid-argument") {
+                alert("データは正しくありません。")
+            }else if(e.code == "failed-precondition"){
+                alert("再度開きなおすか、ブラウザをリセットしてください。")
+            }else{
+                alert("予期しないエラーが発生しました。オンラインになっているか確認したのち再度開きなおすか、ブラウザをリセットしてください。")
+            }
+        }finally {
+            setLoading(false)
+        }
+    }
+
+
+
     if(device && props) {
+        let level:number
+        if(props.deviceType === "smartSilo"){
+            if(props.levelType === "weight"){
+                level = device.scale?(device.scale.weight / (props.weight? props.weight.max:0))*100 : 0
+            }else{
+                level = device.adc?device.adc.level:0
+            }
+        }else if(props.deviceType == "normalSilo"){
+            if(!device.adc){
+                level = 0
+            }else if( device.configs?.adc){//DBに固有のADC補正値がある場合
+                level = (device.adc.level - device.configs.adc.min) / (device.configs.adc.max - device.configs.adc.min)
+            }else if(props.level){//DBに固有の補正値がない場合
+                level = (device.adc.level - props.level.min.adc) / (props.level.max.adc - props.level.min.adc)
+            }else{
+                level = 0
+            }
+        }else{
+            level = 0
+        }
+
         return (
             <>
                 <Head>
@@ -136,17 +208,25 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                     基本情報
                                 </CCardHeader>
                                 <CCardBody>
-                                    <ul className={"mx-3 mb-0"}>
-                                        <li>ID: {device.siloId}</li>
-                                        <li>管理番号: {device.serialNumber?device.serialNumber:"未設定"}</li>
-                                        <li>始動日: {device.currentPositionStartTime?device.currentPositionStartTime.toLocaleString():"未開始"}</li>
-                                        <li>更新日: {device.updatedAt?device.updatedAt.toLocaleString():"最終更新日がありません"}</li>
-                                        <li>通信状況 : {online? <div style={{ color: 'green' ,display:"contents" }}>● OK</div>: <div style={{ color: 'red' ,display:"contents" }}>× NG</div>}</li>
-                                    </ul>
-                                    <SiloImage level={Math.round(props.levelType === "weight"?
-                                        device.scale?(device.scale.weight / (props.weight? props.weight.max:0))*100 : 0 :
-                                        device.adc?device.adc.level:0
-                                    )} judgment={device.judgment?device.judgment.status:[false,false,false,false,false,false,false,false]} image={{
+                                    <form onSubmit={handleCommandSubmit}>
+                                        <ul className={"mx-3 mb-0"}>
+                                            <li>ID: {device.siloId}</li>
+                                            {/*<li>管理番号: {device.serialNumber?device.serialNumber:"未設定"}</li>*/}
+                                            <li>始動日: {device.currentPositionStartTime?device.currentPositionStartTime.toLocaleString():"未開始"}</li>
+                                            <li>更新日: {device.updatedAt?device.updatedAt.toLocaleString():"最終更新日がありません"}</li>
+                                            <li>通信状況 : {online? <div style={{ color: 'green' ,display:"contents" }}>● OK</div>: <div style={{ color: 'red' ,display:"contents" }}>× NG</div>}</li>
+                                            <CFormInput id="serialNumber" label="管理番号" type="text" maxLength={20} defaultValue={device.serialNumber?device.serialNumber:"未設定"} onChange={handleEditOnChange} required className="mb-3"/>
+                                            {props.deviceType === "normalSilo"?
+                                                <CFormInput id="silo1_max_capacity" label="最大内容量(t)" type="number" min={1} max={100000} step={0.1} defaultValue={device.siloInfo?device.siloInfo.maxCapacity:20} onChange={handleEditOnChange} required className="mb-3"/>
+                                                :
+                                                <></>
+                                            }
+                                        </ul>
+                                        <CCol lg={4} className="mb-3">
+                                            <button className="btn btn-outline-primary w-100 pt-3 pb-3" type="submit">保存</button>
+                                        </CCol>
+                                    </form>
+                                    <SiloImage level={Math.round(level)} judgment={device.judgment?device.judgment.status:[false,false,false,false,false,false,false,false]} image={{
                                         base: props.baseImage,
                                         judgment: props.judgment.map(value => value.mask),
                                         level: props.levelImage?.imageMask,
@@ -161,7 +241,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         })
                                     }}　 />
 
-                                    {props.levelType === "weight" || props.levelType === "level" ?
+                                    {(props.levelType === "weight" || props.levelType === "level") && props.deviceType == "smartSilo" ?
                                         device.scale  && props.weight ?
                                             <CCardText
                                                 className={device.scale.weight < props.weight.min || device.scale.weight > props.weight.max || !device.scale.active ? style.status_text_red : style.status_text}>
@@ -176,7 +256,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                             <CCardText>重量データがありません</CCardText>
                                         :<></>
                                     }
-                                    {props.levelType === "level" ?
+                                    {props.levelType === "level" && props.deviceType == "smartSilo" ?
                                         device.adc && props.level?
                                             <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
                                                 {
@@ -199,6 +279,34 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                                 }
                                             </CCardText>
                                                :
+                                            <CCardText>ADCデータがありません</CCardText>
+                                        :<></>
+                                    }
+                                    {props.levelType === "level" && props.deviceType == "normalSilo" ?
+                                        device.adc && props.level?
+                                            <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
+                                                {
+                                                    props.level.alert.min > device.adc.level ?
+                                                        `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
+                                                        device.configs?.adc?//DBに固有のADC補正値がある場合
+                                                            device.configs.adc.max_error < device.adc.level ?
+                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                                <ul className={"m-3 mb-0"}>
+                                                                    <li><div className={style.weight_text}>重量:{(level * (device.siloInfo?.maxCapacity??20)).toFixed(1).toLocaleString()}t</div></li>
+                                                                    <li>レベル:{Math.round(level * 100)}%</li>
+                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
+                                                                </ul>
+                                                            ://DBに固有の補正値がない場合
+                                                            props.level.alert.max < device.adc.level ?
+                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
+                                                                <ul className={"m-3 mb-0"}>
+                                                                    <li><div className={style.weight_text}>重量:{(level * (device.siloInfo?.maxCapacity??20)).toFixed(1).toLocaleString()}t</div></li>
+                                                                    <li>在庫:{Math.round(level * 100)}%</li>
+                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
+                                                                </ul>
+                                                }
+                                            </CCardText>
+                                            :
                                             <CCardText>ADCデータがありません</CCardText>
                                         :<></>
                                     }

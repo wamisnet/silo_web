@@ -87,6 +87,9 @@
             "id": "ST-02",
             "type": "stvn-level"
         },{
+            "id": "ST-03",
+            "type": "stvn-level-normal"
+        },{
             "id": "STVN-3787U",
             "type": "stvn"
         },{
@@ -146,9 +149,67 @@
         },{
             "id": "STVN-3772U",
             "type": "stvn-level"
+        },{
+            "id": "STVN-4034U",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4035U",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2248",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2250",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2951",
+            "type": "stvn-level"
+        },{
+            "id": "STV3-345",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-699",
+            "type": "stvn-level"
+        },{
+            "id": "STV3-491",
+            "type": "stvn-level"
+        },{
+            "id": "STV3-198",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2125",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-832",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-835",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2511",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2184",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-2011",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4014",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4020",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4021",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4013",
+            "type": "stvn-level"
         }
     ],
     "stvn": {
+        "deviceType":"smartSilo",
         "name": "昭和鋼機スマートサイロ",
         "description": "昭和鋼機の説明",
         "levelType": "weight",
@@ -319,6 +380,7 @@
         ]
     },
     "stvn-level": {
+        "deviceType":"smartSilo",
         "name": "昭和鋼機スマートサイロ",
         "description": "昭和鋼機の説明",
         "levelType": "level",
@@ -326,6 +388,187 @@
             "max": 30000,
             "min": 3000
         },
+        "level": {
+            "max": {
+                "adc": 455,
+                "height": 6
+            },
+            "min": {
+                "adc":85,
+                "height": 0
+            },
+            "alert": {
+                "max": 490,
+                "min": 40
+            }
+        },
+        "baseImage": "/image/silo/type/base.png",
+        "levelImage": {
+            "viewType": "image",
+            "imageMask": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+            ]
+        },
+        "levelColor": [
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff"
+        ],
+        "judgment": [
+            {
+                "mask": "/image/silo/type/j_IN1.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+                "title": "竪SCサーマル",
+                "description": "竪SCサーマル",
+                "active": true,
+                "accept": "",
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN2.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+
+                "title": "引出SCサーマル",
+                "description": "引出SCサーマル",
+                "active": true,
+                "accept": "",
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN3.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "点灯"
+                },
+                "title": "満量",
+                "description": "満量センサー",
+                "active": true,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN4.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#00ff00",
+                    "text": "点灯"
+                },
+                "title": "1車受け入れ可",
+                "description": "1車受け入れ可",
+                "active": true,
+                "accept": "close",
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN5.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "停止"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "作動"
+                },
+                "title": "満量ブザー",
+                "description": "満量ブザー",
+                "active": true,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN6",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN7",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN8",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            }
+        ]
+    },
+    "stvn-level-normal": {
+        "deviceType":"normalSilo",
+        "name": "昭和鋼機サイロ（後付け）",
+        "description": "昭和鋼機の説明",
+        "levelType": "level",
         "level": {
             "max": {
                 "adc": 455,

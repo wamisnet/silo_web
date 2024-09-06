@@ -245,10 +245,19 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
                                             <CTableDataCell>{value.data.serialNumber}</CTableDataCell>
                                             <CTableDataCell>{value.data.address?value.data.address:"住所なし"}</CTableDataCell>
                                             <CTableDataCell>{value.data.currentPositionStartTime?value.data.currentPositionStartTime.toLocaleString():""}</CTableDataCell>
-                                            {value.config?.levelType === "weight" || value.config?.levelType === "level" ?
+                                            {(value.config?.levelType === "weight" || value.config?.levelType === "level") && value.config?.deviceType == "smartSilo" ?
                                                 <CTableDataCell className="right-align" >
                                                     {value.data.scale && value.data.scale.active?
                                                         Math.round(value.data.scale.weight).toLocaleString()+"kg"
+                                                        :"未接続"
+                                                    }</CTableDataCell>
+
+                                                :<></>
+                                            }
+                                            {value.config?.levelType === "level" && value.config.level && value.config.deviceType == "normalSilo" ?
+                                                <CTableDataCell className="right-align" >
+                                                    {value.data.adc && value.data.adc.active?
+                                                        ((value.data.adc.level - value.config.level.min.adc) / (value.config.level.max.adc - value.config.level.min.adc) * (value.data.siloInfo?.maxCapacity??20)).toFixed(1).toLocaleString()+"t"
                                                         :"未接続"
                                                     }</CTableDataCell>
 

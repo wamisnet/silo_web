@@ -16,7 +16,8 @@ export interface DeviceToken {
 }
 
 export interface DeviceEditConfig {
-  userEditName:string
+  serialNumber?:string
+  userEditName?:string
   siloInfo:EditableSiloDeviceInfo
   silo2Info:EditableSiloDeviceInfo
   silo3Info:EditableSiloDeviceInfo

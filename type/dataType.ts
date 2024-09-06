@@ -126,6 +126,9 @@ export type ADCScanData = {
 }
 
 export type JSONSiloConfig = {
+    deviceType:"smartSilo"|"normalSilo"
+    //normalSilo : 後付けサイロ
+    //smartSilo : スマートサイロ
     name:string
     description:string
     levelType:"weight"|"level"
