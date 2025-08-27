@@ -70,7 +70,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                         query.forEach(doc => {
                                 const data = doc.data()
                                 console.log("Current data: ", data, doc.id)
-                                setDevice(toDeviceInfo(doc))
+                                setDevice(toDeviceInfo(doc,props?.weight,props?.level))
                             }
                         )
                     }

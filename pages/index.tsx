@@ -8,14 +8,16 @@ import {CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} fr
 import {collection, where, query} from "firebase/firestore";
 import Link from "next/link";
 import {useFirestoreQuery} from "@react-query-firebase/firestore";
-import {DeviceInfo} from "../type/dataType";
+import {DeviceInfo, JSONDevice, JSONFileType, JSONSiloConfig} from "../type/dataType";
 import {auth, firestore, functions} from "../components/Firebase";
 import Loading from "../components/loading";
 import {httpsCallable} from "firebase/functions";
 import ErrorView from "../layout/ErrorView";
 import {toDeviceInfo} from "../type/convert";
+import fsPromises from "fs/promises";
+import path from "path/posix";
 
-export default function Home() {
+export default function Home(props:JSONFileType) {
     const [isDeleteMode,setDeleteMode] = useState(false)
     const [visible, setVisible] = useState(false)
     const [checkLoading,setCheckLoading] = useState(false)
@@ -58,8 +60,16 @@ export default function Home() {
         console.log(deviceQuery.data)
         console.log(deviceQuery.data.docs.length)
         const dbData:DeviceInfo[] = deviceQuery.data.docs.map<DeviceInfo>((value):DeviceInfo => {
-            // const data = value.data()
-            return toDeviceInfo(value)
+            const data = toDeviceInfo(value)
+            const device = props.devices.find((jsonDevice: JSONDevice)=>jsonDevice.id === value.id) as undefined | JSONDevice
+            let config:JSONSiloConfig|undefined = undefined
+            if(device){
+                // @ts-ignore
+                const data = props[device.type] as JSONSiloConfig
+                console.log(JSON.stringify(data))
+                config = data
+            }
+            return toDeviceInfo(value,config?.weight,config?.level)
         })
         return (
             <>
@@ -106,8 +116,8 @@ export default function Home() {
                             return (<Link href={isDeleteMode?"#":"/device/" + value.siloId} className="link-clear" key={value.siloId}>
                                 <InfoCardView
                                     title={value.siloId}
-                                    value={value.scale && value.scale.active?`${Math.round(value.scale.weight).toLocaleString()} kg`:"重量データがありません"}
-                                    alert={value.scale && value.scale.active && value.scale.weight < 4000}
+                                    value={value.viewScaleData?.active ? `${Math.round(value.viewScaleData.weight).toLocaleString()} kg`:"重量データがありません"}
+                                    alert={value.viewScaleData?.alert || !value.viewScaleData?.active}
                                     isButton={isDeleteMode}
                                       buttonTitle="削除"
                                     onClickButton={(deviceName: string,event:any) => {
@@ -145,4 +155,11 @@ export default function Home() {
         )
     }
 
+}
+export const getStaticProps: () => Promise<{ props: JSONFileType }> = async () => {
+    const filePath = path.join(process.cwd(), 'targetDevices.json');
+
+    const data = await fsPromises.readFile(filePath);
+    const devicesJson = JSON.parse(data.toString());
+    return { props: devicesJson as JSONFileType}
 }

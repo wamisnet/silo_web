@@ -21,11 +21,7 @@ export type DeviceInfo = {
         frequency:string　// 稼働周波数帯
         updatedAt:Date//最終更新日時
     }
-    scale?:{
-        weight:number//重量 kg
-        active:boolean//動作状態
-        updatedAt:Date//最終更新日時
-    }
+    scale?:ScaleScanData
     address?:string;　// 住所
     oldGps?:{
         address?:{
@@ -56,6 +52,26 @@ export type DeviceInfo = {
     siloInfo?:EditableSiloDeviceInfo
     silo2Info?:EditableSiloDeviceInfo
     silo3Info?:EditableSiloDeviceInfo
+    viewScaleData?:ViewScaleData
+    viewScaleData2?:ViewScaleData
+    viewScaleData3?:ViewScaleData
+}
+
+export type ScaleScanData = {
+    weight: number//重量 kg
+    active: boolean//動作状態
+    updatedAt: Date//最終更新日
+}
+
+export type ViewScaleData = {
+    type:"weight"|"level"
+    active:boolean//動作状態
+    alert:boolean//アラート
+    updatedAt:Date//最終更新日時
+    weight:number//重量 kg weightのときのみ
+    level:number // 0-100%
+    height:number //高さ m
+    status:"powerOff_low"|"over"|"normal"//エラーステータス
 }
 
 export type EditableSiloDeviceInfo = {
@@ -85,6 +101,7 @@ export type DeviceHistory = {
 export type JSONDevice = {
     id:string
     type:string
+    maxWeight?:number
 }
 
 export type JSONCenterDevice = {
@@ -92,12 +109,15 @@ export type JSONCenterDevice = {
     silo1:{
         type:string
         //補正できるようにする
+        maxWeight?:number
     }
     silo2:{
         type:string
+        maxWeight?:number
     }
     silo3:{
         type:string
+        maxWeight?:number
     }
 }
 
@@ -125,6 +145,49 @@ export type ADCScanData = {
     updatedAt:Date//最終更新日時
 }
 
+export type JSONWeightConfig = {
+    max:{
+        value:number
+        height:number
+    }
+    min:{
+        value:number
+        height:number
+    }
+    alert:{
+        max:number
+        min:number
+    }
+}
+
+export type JSONLevelConfig = {
+    max:{
+        adc:number
+        height:number
+    }
+    min:{
+        adc:number
+        height:number
+    }
+    alert:{
+        max:number
+        min:number
+    }
+}
+
+export type JSONFileType = {
+    center_devices:{
+        id:string,
+        silo1:{type:string},
+        silo2:{type:string},
+        silo3:{type:string}
+    }
+    devices:{id:string,type:string}[]
+    "stvn":JSONSiloConfig
+    "stvn-level":JSONSiloConfig
+    "stvn-level-no-weight":JSONSiloConfig
+}
+
 export type JSONSiloConfig = {
     deviceType:"smartSilo"|"normalSilo"
     //normalSilo : 後付けサイロ
@@ -132,24 +195,8 @@ export type JSONSiloConfig = {
     name:string
     description:string
     levelType:"weight"|"level"
-    weight?:{
-        max:number
-        min:number
-    }
-    level?:{
-        max:{
-            adc:number
-            height:number
-        }
-        min:{
-            adc:number
-            height:number
-        }
-        alert:{
-            max:number
-            min:number
-        }
-    }
+    weight?:JSONWeightConfig
+    level?:JSONLevelConfig
     baseImage:string
     levelImage?:{
         viewType:"image"|"progress"

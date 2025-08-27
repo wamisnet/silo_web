@@ -75,7 +75,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                         query.forEach(doc => {
                             const data = doc.data()
                             console.log("Current data: ", data, doc.id)
-                            const device = toDeviceInfo(doc)
+                            const device = toDeviceInfo(doc,props?.weight,props?.level)
                             setDevice(device)
                             if (device.updatedAt != undefined) {
                                 const localTime = new Date();
@@ -123,14 +123,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
         deviceInfo.serialNumber = event.target.serialNumber.value
         deviceInfo.userEditName = undefined
 
-        let maxCapacity: number;
-        if (!props) {
-            maxCapacity = 20
-        }else if (props.deviceType === "smartSilo"){
-            maxCapacity = device?.siloInfo?.maxCapacity ?? 20;
-        } else {
-            maxCapacity = Number(event.target.silo1_max_capacity.value);
-        }
+        let maxCapacity: number = Number(event.target.silo1_max_capacity.value);
         deviceInfo.siloInfo = deviceInfo.siloInfo ?? {
             cementType: "normal",
             name: "未設定1",
@@ -172,27 +165,6 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
 
 
     if(device && props) {
-        let level:number
-        if(props.deviceType === "smartSilo"){
-            if(props.levelType === "weight"){
-                level = device.scale?(device.scale.weight / (props.weight? props.weight.max:0))*100 : 0
-            }else{
-                level = device.adc?device.adc.level:0
-            }
-        }else if(props.deviceType == "normalSilo"){
-            if(!device.adc){
-                level = 0
-            }else if( device.configs?.adc){//DBに固有のADC補正値がある場合
-                level = (device.adc.level - device.configs.adc.min) / (device.configs.adc.max - device.configs.adc.min)
-            }else if(props.level){//DBに固有の補正値がない場合
-                level = (device.adc.level - props.level.min.adc) / (props.level.max.adc - props.level.min.adc)
-            }else{
-                level = 0
-            }
-        }else{
-            level = 0
-        }
-
         return (
             <>
                 <Head>
@@ -216,17 +188,13 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                             <li>更新日: {device.updatedAt?device.updatedAt.toLocaleString():"最終更新日がありません"}</li>
                                             <li>通信状況 : {online? <div style={{ color: 'green' ,display:"contents" }}>● OK</div>: <div style={{ color: 'red' ,display:"contents" }}>× NG</div>}</li>
                                             <CFormInput id="serialNumber" label="管理番号" type="text" maxLength={20} defaultValue={device.serialNumber?device.serialNumber:"未設定"} onChange={handleEditOnChange} required className="mb-3"/>
-                                            {props.deviceType === "normalSilo"?
-                                                <CFormInput id="silo1_max_capacity" label="最大内容量(t)" type="number" min={1} max={100000} step={0.1} defaultValue={device.siloInfo?device.siloInfo.maxCapacity:20} onChange={handleEditOnChange} required className="mb-3"/>
-                                                :
-                                                <></>
-                                            }
+                                            <CFormInput id="silo1_max_capacity" label="最大内容量(t)" type="number" min={1} max={100000} step={0.1} defaultValue={device.siloInfo?device.siloInfo.maxCapacity:20} onChange={handleEditOnChange} required className="mb-3"/>
                                         </ul>
                                         <CCol lg={4} className="mb-3">
                                             <button className="btn btn-outline-primary w-100 pt-3 pb-3" type="submit">保存</button>
                                         </CCol>
                                     </form>
-                                    <SiloImage level={Math.round(level)} judgment={device.judgment?device.judgment.status:[false,false,false,false,false,false,false,false]} image={{
+                                    <SiloImage level={Math.round(device.viewScaleData?.level??0)} judgment={device.judgment?device.judgment.status:[false,false,false,false,false,false,false,false]} image={{
                                         base: props.baseImage,
                                         judgment: props.judgment.map(value => value.mask),
                                         level: props.levelImage?.imageMask,
@@ -241,73 +209,33 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                                         })
                                     }}　 />
 
-                                    {(props.levelType === "weight" || props.levelType === "level") && props.deviceType == "smartSilo" ?
-                                        device.scale  && props.weight ?
+                                    {(props.levelType === "weight" || props.levelType === "level") ?
+                                        device.viewScaleData ?
                                             <CCardText
-                                                className={device.scale.weight < props.weight.min || device.scale.weight > props.weight.max || !device.scale.active ? style.status_text_red : style.status_text}>
-                                                {device.scale.active ?
+                                                className={device.viewScaleData.alert || !device.viewScaleData.active ? style.status_text_red : style.status_text}>
+                                                {device.viewScaleData.active ?
                                                     <ul className={"m-3 mb-0"}>
-                                                        <li><div className={style.weight_text}>重量:{Math.round(device.scale.weight).toLocaleString()}kg</div></li>
-                                                        <li>更新日:{device.scale.updatedAt.toLocaleString()}</li>
+                                                        <li><div className={style.weight_text}>在庫:{device.viewScaleData.level.toFixed()}%</div></li>
+                                                        <li><div className={style.weight_text}>残量:{Math.round(device.viewScaleData.weight).toLocaleString()}kg</div></li>
+
+                                                        <li>更新日:{device.viewScaleData.updatedAt.toLocaleString()}</li>
+                                                        {/*{props.levelType === "level" ?*/}
+                                                        {/*    device.viewScaleData.status === "powerOff_low" ?*/}
+                                                        {/*        `センサーの電源がOFFかセンサーが異常です (${device.viewScaleData.updatedAt.toLocaleString()})` :*/}
+                                                        {/*        device.viewScaleData.status === "over" ?*/}
+                                                        {/*            `計測上限です (${device.viewScaleData.updatedAt.toLocaleString()})` :*/}
+                                                        {/*            <>*/}
+                                                        {/*                <li>レベル:{device.viewScaleData.height.toFixed(2)}m<</li>*/}
+                                                        {/*                <li>更新日:{device.viewScaleData.updatedAt.toLocaleString()}</li>*/}
+                                                        {/*            </>*/}
+                                                        {/*            :<></>*/}
+                                                        {/*}*/}
+
                                                     </ul> :
-                                                    `重量計と通信できません (${device.scale.updatedAt.toLocaleString()})`
+                                                    `残量計測機器と通信できません (${device.viewScaleData.updatedAt.toLocaleString()})`
                                                 }
                                             </CCardText> :
-                                            <CCardText>重量データがありません</CCardText>
-                                        :<></>
-                                    }
-                                    {props.levelType === "level" && props.deviceType == "smartSilo" ?
-                                        device.adc && props.level?
-                                            <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
-                                                {
-                                                    props.level.alert.min > device.adc.level ?
-                                                        `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
-                                                        device.configs?.adc?//DBに固有のADC補正値がある場合
-                                                            device.configs.adc.max_error < device.adc.level ?
-                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                                <ul className={"m-3 mb-0"}>
-                                                                    <li>レベル:{((device.adc.level - device.configs.adc.min) * ( props.level.max.height - props.level.min.height) / (device.configs.adc.max - device.configs.adc.min) + props.level.min.height).toFixed(2)}m</li>
-                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
-                                                                </ul>
-                                                        ://DBに固有の補正値がない場合
-                                                            props.level.alert.max < device.adc.level ?
-                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                                <ul className={"m-3 mb-0"}>
-                                                                    <li>レベル:{((device.adc.level - props.level.min.adc) * ( props.level.max.height - props.level.min.height) / (props.level.max.adc - props.level.min.adc) + props.level.min.height).toFixed(2)}m</li>
-                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
-                                                                </ul>
-                                                }
-                                            </CCardText>
-                                               :
-                                            <CCardText>ADCデータがありません</CCardText>
-                                        :<></>
-                                    }
-                                    {props.levelType === "level" && props.deviceType == "normalSilo" ?
-                                        device.adc && props.level?
-                                            <CCardText className={!device.adc.active? style.status_text_red : style.status_text}>
-                                                {
-                                                    props.level.alert.min > device.adc.level ?
-                                                        `センサーの電源がOFFかセンサーが異常です (${device.adc.updatedAt.toLocaleString()})` :
-                                                        device.configs?.adc?//DBに固有のADC補正値がある場合
-                                                            device.configs.adc.max_error < device.adc.level ?
-                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                                <ul className={"m-3 mb-0"}>
-                                                                    <li><div className={style.weight_text}>重量:{(level * (device.siloInfo?.maxCapacity??20)).toFixed(1).toLocaleString()}t</div></li>
-                                                                    <li>レベル:{Math.round(level * 100)}%</li>
-                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
-                                                                </ul>
-                                                            ://DBに固有の補正値がない場合
-                                                            props.level.alert.max < device.adc.level ?
-                                                                `計測上限です (${device.adc.updatedAt.toLocaleString()})` :
-                                                                <ul className={"m-3 mb-0"}>
-                                                                    <li><div className={style.weight_text}>重量:{(level * (device.siloInfo?.maxCapacity??20)).toFixed(1).toLocaleString()}t</div></li>
-                                                                    <li>在庫:{Math.round(level * 100)}%</li>
-                                                                    <li>更新日:{device.adc.updatedAt.toLocaleString()}</li>
-                                                                </ul>
-                                                }
-                                            </CCardText>
-                                            :
-                                            <CCardText>ADCデータがありません</CCardText>
+                                            <CCardText>サイロ残量データがありません</CCardText>
                                         :<></>
                                     }
                                 </CCardBody>

@@ -61,7 +61,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                         query.forEach(doc => {
                                 const data = doc.data()
                                 console.log("Current data: ", data, doc.id)
-                                setDevice(toDeviceInfo(doc))
+                                setDevice(toDeviceInfo(doc,props?.weight,props?.level))
                             }
                         )
                     }
@@ -92,8 +92,8 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                 <main className={styles.main}>
                     <InfoCardView
                         title={device.siloId}
-                        value={device.scale && device.scale.active?`${Math.round(device.scale.weight).toLocaleString()} kg`:"重量データがありません"}
-                        alert={device.scale && device.scale.active && device.scale.weight < 4000}/>
+                        value={device.viewScaleData?.active === true ?`${Math.round(device.viewScaleData.weight).toLocaleString()} kg`:"重量データがありません"}
+                        alert={device.viewScaleData?.alert}/>
                     {device.gps?
                         <Map
                             url="device"

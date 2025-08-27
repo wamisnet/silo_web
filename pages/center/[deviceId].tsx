@@ -210,6 +210,7 @@ const DevicePage:NextPage<Type3SiloConfig | undefined> = (props) => {
         }
     }
     const checkAdc = (deviceScan:ADCScanData|undefined,deviceConfig:ADCConfig|undefined,config:JSONSiloConfig):number =>{
+        console.log(`deviceScan ${JSON.stringify(deviceScan)} deviceConfig ${JSON.stringify(deviceConfig)} config:${JSON.stringify(config)}`)
         if(deviceScan && config.level){
             if(config.level.alert.min > deviceScan.level){
                 return -2 //センサーの電源がOFFかセンサーが異常です

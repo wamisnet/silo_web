@@ -88,7 +88,7 @@
             "type": "stvn-level"
         },{
             "id": "ST-03",
-            "type": "stvn-level-normal"
+            "type": "stvn-level-no-weight"
         },{
             "id": "STVN-3787U",
             "type": "stvn"
@@ -148,7 +148,7 @@
             "type": "stvn-level"
         },{
             "id": "STVN-3772U",
-            "type": "stvn-level"
+            "type": "stvn-level-no-weight-csm"
         },{
             "id": "STVN-4034U",
             "type": "stvn-level"
@@ -157,10 +157,10 @@
             "type": "stvn-level"
         },{
             "id": "STVN-2248",
-            "type": "stvn-level"
+            "type": "stvn-level-no-weight"
         },{
             "id": "STVN-2250",
-            "type": "stvn-level"
+            "type": "stvn-level-no-weight"
         },{
             "id": "STVN-2951",
             "type": "stvn-level"
@@ -206,6 +206,102 @@
         },{
             "id": "STVN-4013",
             "type": "stvn-level"
+        },{
+            "id": "STV3-149",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-4082",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4083",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4084",
+            "type": "stvn-level"
+        },{
+            "id": "STVN-4085",
+            "type": "stvn-level"
+        },{
+            "id": "STV3-088",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STV3-154",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STV3-200",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STV3-375",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-4086",
+            "type": "stvn"
+        },{
+            "id": "STVN-4087",
+            "type": "stvn"
+        },{
+            "id": "STVN-4088",
+            "type": "stvn"
+        },{
+            "id": "STVN-4089",
+            "type": "stvn"
+        },{
+            "id": "STVN-620",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-623",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-2163",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-4019",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-2230",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-2012",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-669",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-3323",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STV3-345",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-2125",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-2951",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-835",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-3198",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-3491",
+            "type": "stvn-level-no-weight"
+        },{
+            "id": "STVN-4140",
+            "type": "stvn"
+        },{
+            "id": "STVN-4141",
+            "type": "stvn"
+        },{
+            "id": "STVN-4142",
+            "type": "stvn"
+        },{
+            "id": "STVN-4143",
+            "type": "stvn"
+        },{
+            "id": "STVN-4152",
+            "type": "stvn"
         }
     ],
     "stvn": {
@@ -214,8 +310,18 @@
         "description": "昭和鋼機の説明",
         "levelType": "weight",
         "weight": {
-            "max": 30000,
-            "min": 3000
+            "max": {
+                "value":30000,
+                "height":20
+            },
+            "min":{
+                "value":0,
+                "height":0
+            },
+            "alert":{
+                "max":30000,
+                "min":3000
+            }
         },
         "baseImage": "/image/silo/type/base.png",
         "levelImage": {
@@ -385,8 +491,18 @@
         "description": "昭和鋼機の説明",
         "levelType": "level",
         "weight": {
-            "max": 30000,
-            "min": 3000
+            "max": {
+                "value":30000,
+                "height":20
+            },
+            "min":{
+                "value":0,
+                "height":0
+            },
+            "alert":{
+                "max":30000,
+                "min":3000
+            }
         },
         "level": {
             "max": {
@@ -564,15 +680,196 @@
             }
         ]
     },
-    "stvn-level-normal": {
+    "stvn-level-no-weight": {
         "deviceType":"normalSilo",
         "name": "昭和鋼機サイロ（後付け）",
-        "description": "昭和鋼機の説明",
+        "description": "重量計なし",
         "levelType": "level",
         "level": {
             "max": {
                 "adc": 455,
                 "height": 6
+            },
+            "min": {
+                "adc":85,
+                "height": 0
+            },
+            "alert": {
+                "max": 490,
+                "min": 40
+            }
+        },
+        "baseImage": "/image/silo/type/base.png",
+        "levelImage": {
+            "viewType": "image",
+            "imageMask": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+            ]
+        },
+        "levelColor": [
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff",
+            "#fff"
+        ],
+        "judgment": [
+            {
+                "mask": "/image/silo/type/j_IN1.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+                "title": "竪SCサーマル",
+                "description": "竪SCサーマル",
+                "active": true,
+                "accept": "",
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN2.png",
+                "open": {
+                    "color": "#00ff00",
+                    "text": "正常"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "異常"
+                },
+
+                "title": "引出SCサーマル",
+                "description": "引出SCサーマル",
+                "active": true,
+                "accept": "",
+                "error": "close"
+            },
+            {
+                "mask": "/image/silo/type/j_IN3.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "点灯"
+                },
+                "title": "満量",
+                "description": "満量センサー",
+                "active": true,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN4.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "消灯"
+                },
+                "close": {
+                    "color": "#00ff00",
+                    "text": "点灯"
+                },
+                "title": "1車受け入れ可",
+                "description": "1車受け入れ可",
+                "active": true,
+                "accept": "close",
+                "error": ""
+            },
+            {
+                "mask": "/image/silo/type/j_IN5.png",
+                "open": {
+                    "color": "#fff",
+                    "text": "停止"
+                },
+                "close": {
+                    "color": "#ff0000",
+                    "text": "作動"
+                },
+                "title": "満量ブザー",
+                "description": "満量ブザー",
+                "active": true,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN6",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN7",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            },
+            {
+                "mask": "",
+                "open": {
+                    "color": "#fff",
+                    "text": "open"
+                },
+                "close": {
+                    "color": "#fff",
+                    "text": "close"
+                },
+                "title": "IN8",
+                "description": "",
+                "active": false,
+                "accept": "",
+                "error": ""
+            }
+        ]
+    },
+    "stvn-level-no-weight-csm": {
+        "deviceType":"normalSilo",
+        "name": "昭和鋼機サイロ（後付け）CSM製",
+        "description": "重量計なし",
+        "levelType": "level",
+        "level": {
+            "max": {
+                "adc": 455,
+                "height": 7.725
             },
             "min": {
                 "adc":85,
