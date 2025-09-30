@@ -26,7 +26,7 @@ class BaseError extends Error {
 
 export class DocumentNotExistError extends BaseError {}
 
-type Document = FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>;
+// type Document = DocumentSnapshot<DocumentData>;
 
 export function toObject<T>(doc: QueryDocumentSnapshot): T {
   if (!doc.exists) throw new DocumentNotExistError(doc.ref.path);
