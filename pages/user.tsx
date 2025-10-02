@@ -207,7 +207,7 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
                     <MobileView className="mt-2">
                         {infos.map(value=> {
                             return (
-                                <Link href={"/user/" + value.siloId} className={indexStyle.table_link} key={value.siloId}>
+                                <Link href={"/user.tsx/" + value.siloId} className={indexStyle.table_link} key={value.siloId}>
                                     <CCard className="w-100 mb-2">
                                         <CCardBody className={indexStyle.table_link} >
                                             <CCardText>
@@ -296,7 +296,7 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
                     <CRow className="g-3 mt-3">
                         <CCol >
                         {(mode !== "back" && page_key !== undefined && deviceInfos.length >= PAGE_DATA) || (mode === "back" && deviceInfos.length > PAGE_DATA)?
-                            <Link href={`/user/?page_key=${infos[0].siloId}&mode=back`}>
+                            <Link href={`/user.tsx/?page_key=${infos[0].siloId}&mode=back`}>
                                 <CButton className={indexStyle.mr_3}>
                                     戻る
                                 </CButton>
@@ -304,8 +304,8 @@ const Home:NextPage<JSONFile | undefined> = (props) => {
                         :<></>}
                         {(mode !== "back" && deviceInfos.length > PAGE_DATA) || (mode === "back" && page_key !== undefined)?
                             <Link href={deviceInfos.length > PAGE_DATA || page_key === undefined?
-                                `/user/?page_key=${deviceInfos[deviceInfos.length-1].siloId}`:
-                                `/user/?page_key=${page_key}`}>
+                                `/user.tsx/?page_key=${deviceInfos[deviceInfos.length - 1].siloId}`:
+                                `/user.tsx/?page_key=${page_key}`}>
                                 <CButton>
                                     次へ
                                 </CButton>

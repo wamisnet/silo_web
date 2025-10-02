@@ -27,7 +27,6 @@ import HistoryList from "../../components/historyList";
 import SiloImage from "../../components/siloImage";
 import fsPromises from 'fs/promises'
 import path from "node:path";
-import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
 
 import {GetStaticPaths, NextPage} from "next";
 import useInterval from "use-interval";
@@ -353,7 +352,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                 </main>
                 <div className={styles.buttonLayoutBase}>
                     <div className={indexStyle.bottom_button}>
-                        <Link href={"/user"}>
+                        <Link href={"/user.tsx"}>
                             <button type="button" className={"btn btn-primary rounded-pill"}>
                                 一覧画面へ
                             </button>
@@ -374,7 +373,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                 <Header/>
                 <ErrorView errorMessage={"デバイスの情報がありません。管理者に連絡ください。"}/>
                <div className={indexStyle.bottom_button}>
-                   <Link href={"/user"}>
+                   <Link href={"/user.tsx"}>
                        <button type="button" className={"btn btn-primary rounded-pill"}>
                            トップページへ
                        </button>
@@ -419,7 +418,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
                     <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
                 </main>
                 <div className={indexStyle.bottom_button}>
-                    <Link href={"/user"}>
+                    <Link href={"/user.tsx"}>
                         <button type="button" className={"btn btn-primary rounded-pill"}>
                             トップページへ
                         </button>
@@ -431,7 +430,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
 
 }
 
-export const getStaticPaths: GetStaticPaths<Params> = async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
     const filePath = path.join(process.cwd(), 'targetDevices.json');
 
     const data = await fsPromises.readFile(filePath);

@@ -32,13 +32,17 @@ import {
 import style from "../../layout/InfoCardView.module.css";
 import fsPromises from 'fs/promises'
 import path from "node:path";
-import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
+import { GetStaticProps, GetStaticPaths, GetStaticPropsContext } from "next";
+import { ParsedUrlQuery } from 'querystring';
 
-import {GetStaticPaths, NextPage} from "next";
+import {NextPage} from "next";
 import useInterval from "use-interval";
 import {httpsCallable} from "firebase/functions";
 import {usePageLeaveConfirmation} from "../../components/usePageLeaveConfirmation";
 import SiloCenterImage from "../../components/SiloCenterImage";
+interface MyParams extends ParsedUrlQuery {
+    deviceId: string;
+}
 const DevicePage:NextPage<Type3SiloConfig | undefined> = (props) => {
     const router = useRouter()
     const {deviceId,token} = router.query
@@ -386,7 +390,7 @@ const DevicePage:NextPage<Type3SiloConfig | undefined> = (props) => {
                 <Header/>
                 <ErrorView errorMessage={"デバイスの情報がありません。管理者に連絡ください。"}/>
                <div className={indexStyle.bottom_button}>
-                   <Link href={"/user"}>
+                   <Link href={"/user.tsx"}>
                        <button type="button" className={"btn btn-primary rounded-pill"}>
                            トップページへ
                        </button>
@@ -431,7 +435,7 @@ const DevicePage:NextPage<Type3SiloConfig | undefined> = (props) => {
                     <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
                 </main>
                 <div className={indexStyle.bottom_button}>
-                    <Link href={"/user"}>
+                    <Link href={"/user.tsx"}>
                         <button type="button" className={"btn btn-primary rounded-pill"}>
                             トップページへ
                         </button>
@@ -443,9 +447,8 @@ const DevicePage:NextPage<Type3SiloConfig | undefined> = (props) => {
 
 }
 
-export const getStaticPaths: GetStaticPaths<Params> = async () => {
+export const getStaticPaths: GetStaticPaths = async (context: GetStaticPropsContext<MyParams>) => {
     const filePath = path.join(process.cwd(), 'targetDevices.json');
-
     const data = await fsPromises.readFile(filePath);
     const devicesJson = JSON.parse(data.toString());
     const deviceList = devicesJson.center_devices.map((value: JSONDevice)=>value.id) as string[]

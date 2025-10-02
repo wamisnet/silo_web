@@ -3,11 +3,10 @@ import styles from '../styles/Home.module.css'
 import Header from "../components/header";
 import InfoCardView from "../layout/InfoCardView";
 import indexStyle from "./index.module.css"
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react"; // useEffectを追加
 import {CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react";
-import {collection, where, query} from "firebase/firestore";
+import {collection, where, query, onSnapshot} from "firebase/firestore"; // onSnapshotを追加
 import Link from "next/link";
-import {useFirestoreQuery} from "@react-query-firebase/firestore";
 import {DeviceInfo, JSONDevice, JSONFileType, JSONSiloConfig} from "../type/dataType";
 import {auth, firestore, functions} from "../components/Firebase";
 import Loading from "../components/loading";
@@ -21,25 +20,61 @@ export default function Home(props:JSONFileType) {
     const [isDeleteMode,setDeleteMode] = useState(false)
     const [visible, setVisible] = useState(false)
     const [checkLoading,setCheckLoading] = useState(false)
-    const [errorMessage,setErrorMessage] = useState("")
     const [deleteDevice, setDeleteDevice] = useState<DeviceInfo | undefined>(undefined)
-    const deviceQuery = useFirestoreQuery(
-        ["v2devices"],
-        query(collection(firestore, "v2devices"),where('onceUser', 'array-contains',  auth.currentUser?.uid)),
-        {subscribe:true});
-    if(deviceQuery.error){
-        return( <>
-            <Head>
-                <title>Smart Silo</title>
-                <meta name="description" content="昭和鋼機のサイロの重量を確認できます"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <link rel="icon" href="/favicon.ico"/>
-            </Head>
-            <Header/>
-            <ErrorView errorMessage={JSON.stringify(deviceQuery.error)}/>
-        </>)
-    }
-    if(errorMessage){
+
+    // --- ▼▼▼ ここから変更 ▼▼▼ ---
+    // データを保持するためのStateを追加
+    const [dbData, setDbData] = useState<DeviceInfo[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        // ユーザーがログインしているか確認
+        if (!auth.currentUser) {
+            setLoading(false);
+            // ログインしていない場合は何もしない、もしくはログインページへリダイレクト
+            return;
+        }
+
+        // Firestoreのクエリを作成
+        const q = query(
+            collection(firestore, "v2devices"),
+            where('onceUser', 'array-contains', auth.currentUser.uid)
+        );
+
+        // onSnapshotでデータの変更をリッスン
+        const unsubscribe = onSnapshot(q,
+            (querySnapshot) => {
+                // 取得したドキュメントをDeviceInfoの配列に変換
+                const data = querySnapshot.docs.map<DeviceInfo>((doc) => {
+                    const deviceInfo = toDeviceInfo(doc);
+                    const deviceConfig = props.devices.find((jsonDevice: JSONDevice) => jsonDevice.id === doc.id);
+                    let config: JSONSiloConfig | undefined = undefined;
+                    if (deviceConfig) {
+                        // @ts-ignore
+                        config = props[deviceConfig.type] as JSONSiloConfig;
+                    }
+                    return toDeviceInfo(doc, config?.weight, config?.level);
+                });
+
+                setDbData(data);
+                setLoading(false);
+            },
+            (error) => {
+                // エラーハンドリング
+                console.error("Error fetching documents: ", error);
+                setErrorMessage("データの取得中にエラーが発生しました。");
+                setLoading(false);
+            }
+        );
+
+        // コンポーネントがアンマウントされる時にリスナーを解除
+        return () => unsubscribe();
+    }, [props]); // propsが変更された場合にも再実行
+
+    // --- ▲▲▲ ここまで変更 ▲▲▲ ---
+
+    if (errorMessage) {
         return( <>
             <Head>
                 <title>Smart Silo</title>
@@ -51,26 +86,13 @@ export default function Home(props:JSONFileType) {
             <ErrorView errorMessage={errorMessage}/>
         </>)
     }
-    if ((deviceQuery.isLoading && !deviceQuery.isFetched) || checkLoading) {
+
+    if (loading || checkLoading) {
         console.log("loading...")
         return <Loading/>;
     }
 
-    if(deviceQuery.data && deviceQuery.data.docs.length != 0) {
-        console.log(deviceQuery.data)
-        console.log(deviceQuery.data.docs.length)
-        const dbData:DeviceInfo[] = deviceQuery.data.docs.map<DeviceInfo>((value):DeviceInfo => {
-            const data = toDeviceInfo(value)
-            const device = props.devices.find((jsonDevice: JSONDevice)=>jsonDevice.id === value.id) as undefined | JSONDevice
-            let config:JSONSiloConfig|undefined = undefined
-            if(device){
-                // @ts-ignore
-                const data = props[device.type] as JSONSiloConfig
-                console.log(JSON.stringify(data))
-                config = data
-            }
-            return toDeviceInfo(value,config?.weight,config?.level)
-        })
+    if(dbData.length > 0) {
         return (
             <>
                 <Head>
@@ -112,20 +134,20 @@ export default function Home(props:JSONFileType) {
                 </CModal>
                 <main className={styles.main}>
                     {dbData.map(value=> {
-                        console.log("db",value)
+                            console.log("db",value)
                             return (<Link href={isDeleteMode?"#":"/device/" + value.siloId} className="link-clear" key={value.siloId}>
                                 <InfoCardView
                                     title={value.siloId}
                                     value={value.viewScaleData?.active ? `${Math.round(value.viewScaleData.weight).toLocaleString()} kg`:"重量データがありません"}
                                     alert={value.viewScaleData?.alert || !value.viewScaleData?.active}
                                     isButton={isDeleteMode}
-                                      buttonTitle="削除"
+                                    buttonTitle="削除"
                                     onClickButton={(deviceName: string,event:any) => {
-                                       event.stopPropagation()
-                                       setDeleteDevice(value);
-                                       setVisible(true);
-                                       console.log("delete dialog", deviceName)
-                                   }}/>
+                                        event.stopPropagation()
+                                        setDeleteDevice(value);
+                                        setVisible(true);
+                                        console.log("delete dialog", deviceName)
+                                    }}/>
                             </Link>)
                         }
                     )}
@@ -149,7 +171,7 @@ export default function Home(props:JSONFileType) {
                 <Header/>
 
                 <main className={styles.main}>
-                   <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
+                    <InfoCardView title="データがありません。サイロにあるQRコードを読み取って追加してください。" value=""/>
                 </main>
             </>
         )

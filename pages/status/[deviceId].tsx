@@ -21,7 +21,6 @@ import { BrowserView, MobileView, isBrowser, isMobile } from 'react-device-detec
 import SiloImage from "../../components/siloImage";
 import useInterval from "use-interval";
 import {GetStaticPaths, NextPage} from "next";
-import {Params} from "next/dist/shared/lib/router/utils/route-matcher";
 import path from "node:path";
 import fsPromises from "fs/promises";
 const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
@@ -365,7 +364,7 @@ const DevicePage:NextPage<JSONSiloConfig | undefined> = (props) => {
 
 }
 
-export const getStaticPaths: GetStaticPaths<Params> = async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
     const filePath = path.join(process.cwd(), 'targetDevices.json');
 
     const data = await fsPromises.readFile(filePath);
